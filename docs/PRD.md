@@ -59,7 +59,7 @@ ConfidentialPay is an on-chain payroll dApp where a company pays employees in en
 
 Every EVM state variable is public. Storing `uint256 salary` makes every employee's compensation readable by competitors, colleagues, and regulators. Even with off-chain storage, payment transfers on-chain emit plaintext amounts in `Transfer` events.
 
-Fully Homomorphic Encryption solves this at the protocol level. The fhEVM coprocessor executes arithmetic on ciphertexts without decrypting them. The ERC-7984 standard replaces `uint256` balances with `euint64` handles. No amount ever appears in plaintext anywhere on-chain.
+Fully Homomorphic Encryption solves this at the protocol level. The fhEVM coprocessor executes arithmetic on ciphertexts without decrypting them. The ERC-7984 standard replaces `uint256` balances with `euint64` handles. Salary amounts and payroll transfer values remain encrypted on-chain at all times. Two flows do disclose amounts: wrapping USDC emits the deposit amount in `USDCWrapped`, and finalizing an unwrap request reveals the withdrawn amount once the KMS decryption proof is submitted — both are user-initiated and disclosed upfront in the UI.
 
 ---
 
