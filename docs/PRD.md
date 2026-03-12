@@ -135,10 +135,10 @@ graph TB
         direction TB
         subgraph Views[" "]
             direction LR
-            EmpView["/employer\nCSV upload\nApprove + wrap\nRun payroll\nView roster"]
-            EeView["/employee\nDecrypt salary\nCheck balance\nUnwrap to USDC"]
+            EmpView["/employer<br/>CSV upload<br/>Approve + wrap<br/>Run payroll<br/>View roster"]
+            EeView["/employee<br/>Decrypt salary<br/>Check balance<br/>Unwrap to USDC"]
         end
-        SDK["@zama-fhe/relayer-sdk SepoliaConfig\ninitSDK - createEncryptedInput - allowTransient decrypt"]
+        SDK["@zama-fhe/relayer-sdk SepoliaConfig<br/>initSDK · createEncryptedInput · allowTransient decrypt"]
         WV["Wagmi + Viem"]
         Views --> SDK --> WV
     end
@@ -147,9 +147,9 @@ graph TB
 
     subgraph Sepolia["SEPOLIA L1"]
         direction TB
-        CP["ConfidentialPayroll\nZamaEthereumConfig\nOwnable2Step - ReentrancyGuard - Pausable\n\n_employees salary euint64\nbatchAddEmployees - runPayroll - getSalary"]
-        CU["ConfidentialUSDC ERC-7984\nZamaEthereumConfig\nlib/confidential/ERC7984\n\nwrap - confidentialTransferFrom\nunwrap - finalizeUnwrap - encryptedBalanceOf"]
-        MU["MockUSDC ERC-20\nOZ ERC20 - Ownable"]
+        CP["<b>ConfidentialPayroll</b><br/>ZamaEthereumConfig · Ownable2Step<br/>ReentrancyGuard · Pausable<br/><br/>batchAddEmployees · runPayroll · getSalary"]
+        CU["<b>ConfidentialUSDC</b> ERC-7984<br/>ZamaEthereumConfig · lib/confidential<br/><br/>wrap · confidentialTransferFrom<br/>unwrap · finalizeUnwrap · encryptedBalanceOf"]
+        MU["<b>MockUSDC</b> ERC-20<br/>OZ ERC20 · Ownable"]
         CP -->|"confidentialTransferFrom"| CU
         CU -->|"wraps ERC-20"| MU
     end
@@ -158,11 +158,11 @@ graph TB
 
     subgraph Copro["FHE COPROCESSOR NETWORK"]
         direction LR
-        ACL["ACL Contract\nhandle permissions"]
-        Exec["FHEVMExecutor\ncoprocessor ops"]
-        KMSv["KMSVerifier\nthreshold key mgmt"]
-        GW["Gateway\nre-encryption requests"]
-        Relay["Relayer\nHTTP abstraction"]
+        ACL["ACL Contract<br/>handle permissions"]
+        Exec["FHEVMExecutor<br/>coprocessor ops"]
+        KMSv["KMSVerifier<br/>threshold key mgmt"]
+        GW["Gateway<br/>re-encryption requests"]
+        Relay["Relayer<br/>HTTP abstraction"]
     end
 ```
 
