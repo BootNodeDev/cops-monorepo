@@ -129,90 +129,67 @@ address,name,role,monthly_usdc
 
 ### 5.1 High-Level Diagram
 
-```
-┌────────────────────────────────────────────────────────────────┐
-│                          BROWSER                               │
-│                                                                │
-│  ┌────────────────────┐      ┌──────────────────────────────┐  │
-│  │  /employer         │      │  /employee                   │  │
-│  │  CSV upload        │      │  Decrypt salary              │  │
-│  │  Approve + wrap    │      │  Check balance               │  │
-│  │  Run payroll       │      │  Unwrap to USDC              │  │
-│  │  View roster       │      │                              │  │
-│  └─────────┬──────────┘      └──────────────┬───────────────┘  │
-│            │                                │                  │
-│  ┌─────────▼────────────────────────────────▼───────────────┐  │
-│  │           @zama-fhe/relayer-sdk  (SepoliaConfig)          │  │
-│  │  initSDK · createEncryptedInput · allowTransient decrypt  │  │
-│  └─────────────────────────┬────────────────────────────────┘  │
-│                            │  Wagmi + Viem                     │
-└────────────────────────────┼───────────────────────────────────┘
-                             │ RPC (Sepolia)
-              ┌──────────────▼──────────────────────┐
-              │           SEPOLIA L1                 │
-              │                                      │
-              │  ┌──────────────────────────────┐    │
-              │  │    ConfidentialPayroll        │    │
-              │  │  ZamaEthereumConfig           │    │
-              │  │  OZ: Ownable2Step             │    │
-              │  │  OZ: ReentrancyGuard          │    │
-              │  │  OZ: Pausable                 │    │
-              │  │                               │    │
-              │  │  _employees[]: salary euint64 │    │
-              │  │                               │    │
-              │  │  batchAddEmployees()          │    │
-              │  │  runPayroll()                 │    │
-              │  │  getSalary()                  │    │
-              │  └──────────────┬────────────────┘    │
-              │                 │ confidentialTransferFrom     │
-              │  ┌──────────────▼────────────────┐    │
-              │  │    ConfidentialUSDC            │    │
-              │  │    (ERC-7984)                  │    │
-              │  │  ZamaEthereumConfig           │    │
-              │  │  lib/confidential/ERC7984     │    │
-              │  │                               │    │
-              │  │  wrap(to, amount)             │    │
-              │  │  confidentialTransferFrom()   │    │
-              │  │  unwrap() / finalizeUnwrap()  │    │
-              │  │  encryptedBalanceOf()         │    │
-              │  └──────────────┬────────────────┘    │
-              │                 │ wraps ERC-20         │
-              │  ┌──────────────▼────────────────┐    │
-              │  │       MockUSDC (ERC-20)        │    │
-              │  │  OZ: ERC20, Ownable            │    │
-              │  └───────────────────────────────┘    │
-              └──────────────────────────────────────-┘
-                             │
-              ┌──────────────▼──────────────────────┐
-              │     FHE COPROCESSOR NETWORK          │
-              │                                      │
-              │  ACL Contract (handle permissions)   │
-              │  FHEVMExecutor (coprocessor ops)     │
-              │  KMSVerifier (threshold key mgmt)    │
-              │  Gateway (re-encryption requests)    │
-              │  Relayer (HTTP abstraction layer)    │
-              └──────────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph Browser["BROWSER"]
+        direction TB
+        subgraph Views[" "]
+            direction LR
+            EmpView["/employer\nCSV upload\nApprove + wrap\nRun payroll\nView roster"]
+            EeView["/employee\nDecrypt salary\nCheck balance\nUnwrap to USDC"]
+        end
+        SDK["@zama-fhe/relayer-sdk SepoliaConfig\ninitSDK - createEncryptedInput - allowTransient decrypt"]
+        WV["Wagmi + Viem"]
+        Views --> SDK --> WV
+    end
+
+    WV -->|"RPC Sepolia"| CP
+
+    subgraph Sepolia["SEPOLIA L1"]
+        direction TB
+        CP["ConfidentialPayroll\nZamaEthereumConfig\nOwnable2Step - ReentrancyGuard - Pausable\n\n_employees salary euint64\nbatchAddEmployees - runPayroll - getSalary"]
+        CU["ConfidentialUSDC ERC-7984\nZamaEthereumConfig\nlib/confidential/ERC7984\n\nwrap - confidentialTransferFrom\nunwrap - finalizeUnwrap - encryptedBalanceOf"]
+        MU["MockUSDC ERC-20\nOZ ERC20 - Ownable"]
+        CP -->|"confidentialTransferFrom"| CU
+        CU -->|"wraps ERC-20"| MU
+    end
+
+    MU --- Copro
+
+    subgraph Copro["FHE COPROCESSOR NETWORK"]
+        direction LR
+        ACL["ACL Contract\nhandle permissions"]
+        Exec["FHEVMExecutor\ncoprocessor ops"]
+        KMSv["KMSVerifier\nthreshold key mgmt"]
+        GW["Gateway\nre-encryption requests"]
+        Relay["Relayer\nHTTP abstraction"]
+    end
 ```
 
 ### 5.2 Token Flow
 
-```
-EMPLOYER                                      EMPLOYEE
-   │                                              │
-   │  1. USDC.approve(cUSDCAddress, amount)       │
-   │  2. cUSDC.wrap(payrollContract, amount)      │
-   │     → cUSDC minted to payrollContract        │
-   │                                              │
-   │  3. payroll.runPayroll()                     │
-   │     for each active employee:                │
-   │       cUSDC.confidentialTransferFrom(        │
-   │         address(this), employee, salary)     │
-   │                                         ─────┤
-   │                               4. cUSDC in wallet
-   │                               5. getSalary() → euint64 handle
-   │                                  relayer.decrypt(handle) → plaintext
-   │                               6. cUSDC.unwrap() → async two-step
-   │                                  → plain USDC ✓
+```mermaid
+sequenceDiagram
+    participant Employer
+    participant USDC as MockUSDC
+    participant cUSDC as ConfidentialUSDC
+    participant Payroll as ConfidentialPayroll
+    participant Employee
+
+    Employer->>USDC: 1. approve(cUSDCAddress, amount)
+    Employer->>cUSDC: 2. wrap(payrollContract, amount)
+    Note over cUSDC,Payroll: cUSDC minted to payrollContract
+
+    Employer->>Payroll: 3. runPayroll()
+    loop For each active employee
+        Payroll->>cUSDC: confidentialTransferFrom(this, employee, salary)
+    end
+
+    Note over Employee: 4. cUSDC in wallet
+    Employee->>Payroll: 5. getSalary() -> euint64 handle
+    Note over Employee: relayer.decrypt(handle) -> plaintext
+    Employee->>cUSDC: 6. unwrap() -> async two-step
+    Note over Employee: plain USDC received
 ```
 
 ---
@@ -903,66 +880,98 @@ Zustand stores:
 
 ### 10.1 Employee Registration
 
-```
-1. Employer uploads CSV
-2. Frontend parses rows with papaparse
-3. For each row: encryptWith(salary) → {externalEuint64, inputProof}
-4. batchAddEmployees(wallets[], names[], roles[], encSalaries[], inputProofs[])
-5.   └─ FHE.fromExternal(encSalary, proof) → euint64 handle
-6.   └─ FHE.allowThis(salary) + FHE.allow(salary, owner) + FHE.allow(salary, employee)
-7.   └─ _employees.push(Employee{...})
-8.   └─ emit EmployeeAdded(id, wallet)
+```mermaid
+sequenceDiagram
+    participant Employer
+    participant Browser
+    participant Payroll as ConfidentialPayroll
+    participant FHE as FHE Coprocessor
+
+    Employer->>Browser: 1. Upload CSV
+    Browser->>Browser: 2. Parse rows (papaparse)
+    Browser->>Browser: 3. encryptWith(salary) per row
+    Note over Browser: {externalEuint64, inputProof} per row
+    Browser->>Payroll: 4. batchAddEmployees(wallets[], names[], roles[], encSalaries[], proofs[])
+    Payroll->>FHE: 5. FHE.fromExternal(encSalary, proof) -> euint64
+    Payroll->>FHE: 6. FHE.allowThis(salary) + allow(owner) + allow(employee)
+    Payroll->>Payroll: 7. _employees.push(Employee{...})
+    Payroll-->>Browser: 8. emit EmployeeAdded(id, wallet)
 ```
 
 ### 10.2 Payroll Execution
 
-```
-1. Employer clicks "Run Payroll"
-2. runPayroll() — onlyOwner, nonReentrant, whenNotPaused
-3.   for each active employee:
-4.     cUSDC.confidentialTransferFrom(address(this), emp.wallet, emp.salary)
-5.       └─ isOperator(address(this), address(this)) = true ✓
-6.       └─ FHE arithmetic: newFromBal = sub(fromBal, salary)
-7.       └─ FHE arithmetic: newToBal   = add(toBal, salary)
-8.       └─ FHE.allow(newFromBal, payrollContract)
-9.       └─ FHE.allow(newToBal, employee)
-10.    emp.lastPaidAt = block.timestamp
-11. emit PayrollExecuted(runId, count, timestamp)
+```mermaid
+sequenceDiagram
+    participant Employer
+    participant Payroll as ConfidentialPayroll
+    participant cUSDC as ConfidentialUSDC
+    participant FHE as FHE Coprocessor
+
+    Employer->>Payroll: 1. runPayroll() [onlyOwner, nonReentrant, whenNotPaused]
+    loop For each active employee
+        Payroll->>cUSDC: 2. confidentialTransferFrom(this, emp.wallet, emp.salary)
+        Note over cUSDC: isOperator(this, this) = true
+        cUSDC->>FHE: 3. newFromBal = sub(fromBal, salary)
+        cUSDC->>FHE: 4. newToBal = add(toBal, salary)
+        FHE-->>cUSDC: 5. allow(newFromBal, payrollContract)
+        FHE-->>cUSDC: 6. allow(newToBal, employee)
+        Payroll->>Payroll: 7. emp.lastPaidAt = block.timestamp
+    end
+    Payroll-->>Employer: 8. emit PayrollExecuted(runId, count, timestamp)
 ```
 
 ### 10.3 Salary Decryption
 
-```
-1. Employee calls getSalary(id) on-chain
-2.   └─ require(msg.sender == emp.wallet || msg.sender == owner())
-3.   └─ return FHE.allowTransient(emp.salary, msg.sender)
-4. Frontend receives euint64 handle
-5. useFHEDecrypt hook:
-6.   └─ Employee wallet already has persistent ACL (set at registration)
-7.   └─ Relayer SDK sends decryption request to KMS Gateway
-8.   └─ KMS decrypts under employee's session key
-9.   └─ results[handle] = BigInt plaintext
-10. Display: Number(results[handle]) / 1_000_000 → "$6,500.00"
+```mermaid
+sequenceDiagram
+    participant Employee
+    participant Payroll as ConfidentialPayroll
+    participant FHE as FHE Coprocessor
+    participant KMS as KMS Gateway
+    participant Browser
+
+    Employee->>Payroll: 1. getSalary(id)
+    Payroll->>Payroll: 2. require(sender == wallet || owner)
+    Payroll->>FHE: 3. FHE.allowTransient(salary, msg.sender)
+    Payroll-->>Browser: 4. returns euint64 handle
+    Browser->>Browser: 5. useFHEDecrypt hook
+    Note over Browser: Employee has persistent ACL from registration
+    Browser->>KMS: 6. Relayer SDK sends decryption request
+    KMS->>KMS: 7. Decrypt under employee session key
+    KMS-->>Browser: 8. results[handle] = BigInt plaintext
+    Browser->>Browser: 9. Display $6,500.00
 ```
 
 ### 10.4 Two-Step Async Unwrap
 
-```
-STEP 1 — Burn and request:
-1. Employee encrypts amount client-side
-2. cUSDC.unwrap(employee, employee, encAmount, inputProof)
-   └─ _burn(employee, encAmount) → FHE.makePubliclyDecryptable(burntHandle)
-   └─ _unwrapRequests[burntHandle] = employee
-   └─ emit UnwrapRequested(employee, burntHandle)
-3. Frontend shows "Pending unwrap… waiting for KMS"
+```mermaid
+sequenceDiagram
+    participant Employee
+    participant Browser
+    participant cUSDC as ConfidentialUSDC
+    participant FHE as FHE Coprocessor
+    participant KMS as KMS Gateway
 
-STEP 2 — Finalize (once KMS proof is available, ~seconds on Sepolia):
-4. KMS decrypts burntHandle off-chain → cleartext + decryptionProof
-5. cUSDC.finalizeUnwrap(burntHandle, cleartext, decryptionProof)
-   └─ FHE.verifySignatures([burntHandle], abi.encode(cleartext), proof)
-   └─ USDC.safeTransfer(employee, cleartext × rate())
-   └─ emit UnwrapFinalized(employee, burntHandle, cleartext)
-6. Employee wallet receives plain USDC
+    rect rgb(235, 235, 255)
+        Note over Employee,KMS: STEP 1 — Burn and request
+        Employee->>Browser: Enter unwrap amount
+        Browser->>Browser: 1. Encrypt amount client-side
+        Browser->>cUSDC: 2. unwrap(employee, employee, encAmount, proof)
+        cUSDC->>FHE: _burn(employee, encAmount)
+        cUSDC->>FHE: makePubliclyDecryptable(burntHandle)
+        cUSDC-->>Browser: emit UnwrapRequested(employee, burntHandle)
+        Browser->>Browser: 3. Show "Pending unwrap... waiting for KMS"
+    end
+
+    rect rgb(235, 255, 235)
+        Note over Employee,KMS: STEP 2 — Finalize (seconds on Sepolia)
+        KMS->>KMS: 4. Decrypt burntHandle off-chain
+        KMS-->>Browser: cleartext + decryptionProof
+        Browser->>cUSDC: 5. finalizeUnwrap(burntHandle, cleartext, proof)
+        cUSDC->>cUSDC: verifySignatures
+        cUSDC->>Employee: 6. USDC.safeTransfer(employee, cleartext)
+        cUSDC-->>Browser: emit UnwrapFinalized(employee, burntHandle, cleartext)
+    end
 ```
 
 ---
