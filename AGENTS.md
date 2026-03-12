@@ -1,7 +1,7 @@
 # COPS — Agent Configuration
 
 Confidential Onchain Payroll System. pnpm monorepo based on fhevm-react-template.
-Full technical spec: [`docs/PRD.md`](docs/PRD.md) (v4.0.0) — read this before touching any code.
+Full technical spec: [`docs/PRD.md`](docs/PRD.md) (v1.0.0) — read this before touching any code.
 
 ---
 
