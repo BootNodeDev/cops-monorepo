@@ -79,6 +79,7 @@ FHE.allow(salary, employeeWallet); // employee
 - **No setPayrollContract()**: ERC7984's `isOperator(holder, spender) = true` when `holder == spender` — payroll can `confidentialTransferFrom` its own balance natively.
 - **Salary immutability**: salaries are immutable after registration. To change: deactivate + re-add.
 - **ERC7984 library**: `@openzeppelin/confidential-contracts@0.3.1` npm package. Peer dep conflict with `@fhevm/solidity@^0.11.1` was resolved upstream — npm package works correctly (compile-time warning only).
+- **Peer dep override**: `confidential-contracts@0.3.1` declares peer `@fhevm/solidity@0.9.1` but we use `0.11.1`. Compiles and works — allowed explicitly via `pnpm.peerDependencyRules` in root `package.json`.
 - **Target network**: Sepolia testnet (chainId 11155111).
 - **No backend**: fully client-side. Vercel static deploy.
 
