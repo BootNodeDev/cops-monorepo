@@ -12,9 +12,22 @@ import "solidity-coverage";
 import "./tasks/accounts";
 
 // Run 'npx hardhat vars setup' to see the list of variables that need to be set
+// Required: DEPLOYER_PK, ALCHEMY_API_KEY, ETHERSCAN_API_KEY
 
-const MNEMONIC: string = vars.get("MNEMONIC", "test test test test test test test test test test test junk");
-const INFURA_API_KEY: string = vars.get("INFURA_API_KEY", "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz");
+const DEPLOYER_PK: string = vars.get("DEPLOYER_PK", "");
+
+const hardhatNetwork = process.env.HARDHAT_NETWORK;
+if (
+  !DEPLOYER_PK &&
+  (hardhatNetwork === "sepolia" || hardhatNetwork === "anvil")
+) {
+  throw new Error(
+    "DEPLOYER_PK is required when using the 'sepolia' or 'anvil' networks. " +
+      "Please set it with `npx hardhat vars set DEPLOYER_PK`.",
+  );
+}
+
+const ALCHEMY_API_KEY: string = vars.get("ALCHEMY_API_KEY", "");
 
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
@@ -22,9 +35,7 @@ const config: HardhatUserConfig = {
     deployer: 0,
   },
   etherscan: {
-    apiKey: {
-      sepolia: vars.get("ETHERSCAN_API_KEY", ""),
-    },
+    apiKey: vars.get("ETHERSCAN_API_KEY", ""),
   },
   gasReporter: {
     currency: "USD",
@@ -33,28 +44,22 @@ const config: HardhatUserConfig = {
   },
   networks: {
     hardhat: {
-      accounts: {
-        mnemonic: MNEMONIC,
-      },
       chainId: 31337,
     },
     anvil: {
-      accounts: {
-        mnemonic: MNEMONIC,
-        path: "m/44'/60'/0'/0/",
-        count: 10,
-      },
+      accounts: [DEPLOYER_PK],
+      chainId: 31337,
+      url: "http://localhost:8545",
+    },
+    localhost: {
+      accounts: [DEPLOYER_PK],
       chainId: 31337,
       url: "http://localhost:8545",
     },
     sepolia: {
-      accounts: {
-        mnemonic: MNEMONIC,
-        path: "m/44'/60'/0'/0/",
-        count: 10,
-      },
+      accounts: [DEPLOYER_PK],
       chainId: 11155111,
-      url: `https://sepolia.infura.io/v3/${INFURA_API_KEY}`,
+      url: `https://eth-sepolia.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
     },
   },
   paths: {

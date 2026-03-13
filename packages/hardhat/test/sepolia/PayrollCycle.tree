@@ -1,0 +1,35 @@
+PayrollCycleSepolia
+├── given contracts are deployed on Sepolia
+│   ├── it should have MockUSDC at expected address
+│   ├── it should have ConfidentialUSDC at expected address
+│   └── it should have ConfidentialPayroll at expected address
+├── given employer mints and wraps USDC
+│   ├── when employer mints MockUSDC
+│   │   └── it should credit employer balance
+│   ├── when employer approves cUSDC
+│   │   └── it should set allowance
+│   └── when employer wraps USDC to payroll
+│       ├── it should emit USDCWrapped
+│       └── it should credit payroll cUSDC balance
+├── given employer registers employee with encrypted salary
+│   ├── when salary is encrypted client-side via relayer SDK
+│   │   └── it should produce externalEuint64 handle + inputProof
+│   ├── when batchAddEmployees is called
+│   │   ├── it should emit EmployeeAdded
+│   │   └── it should increment employeeCount
+│   └── when getSalary is called by employer
+│       └── it should return decryptable salary matching original
+├── given employer runs payroll
+│   ├── when runPayroll is called
+│   │   ├── it should emit PayrollExecuted
+│   │   └── it should update lastPaidAt
+│   └── when employee checks cUSDC balance
+│       └── it should equal the salary amount
+├── given employee decrypts own salary
+│   ├── when employee calls getSalary
+│   │   └── it should return handle with transient ACL
+│   └── when handle is decrypted via relayer
+│       └── it should match the registered salary
+└── given unauthorized caller
+    └── when outsider calls getSalary
+        └── it should revert with Unauthorized
