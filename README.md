@@ -1,190 +1,100 @@
-# FHEVM React Template
+# COPS — Confidential Onchain Payroll System
 
-A minimal React frontend template for building FHEVM-enabled decentralized applications (dApps). This template provides a simple development interface for interacting with FHEVM smart contracts, specifically the `FHECounter.sol` contract.
+On-chain payroll dApp where employers pay employees in encrypted USDC while keeping all salary amounts private. Built with fhEVM coprocessor and ERC-7984 confidential tokens.
 
-## 🚀 What is FHEVM?
+## Deployed Contracts (Sepolia)
 
-FHEVM (Fully Homomorphic Encryption Virtual Machine) enables computation on encrypted data directly on Ethereum. This template demonstrates how to build dApps that can perform computations while keeping data private.
+| Contract | Address | Etherscan |
+|---|---|---|
+| MockUSDC | `0x7FEc53132c406d74995FA36579681C18F1b76C9B` | [View](https://sepolia.etherscan.io/address/0x7FEc53132c406d74995FA36579681C18F1b76C9B#code) |
+| ConfidentialUSDC | `0xFA64d7a4815803f118847438F58A4B569a91a2eb` | [View](https://sepolia.etherscan.io/address/0xFA64d7a4815803f118847438F58A4B569a91a2eb#code) |
+| ConfidentialPayroll | `0xfdc7e95d02f3E092E1CE1fAfeAc866BF757EA812` | [View](https://sepolia.etherscan.io/address/0xfdc7e95d02f3E092E1CE1fAfeAc866BF757EA812#code) |
 
-## ✨ Features
+**Network:** Sepolia (chainId: 11155111)
 
-- **🔐 FHEVM Integration**: Built-in support for fully homomorphic encryption
-- **⚛️ React + Next.js**: Modern, performant frontend framework
-- **🎨 Tailwind CSS**: Utility-first styling for rapid UI development
-- **🔗 RainbowKit**: Seamless wallet connection and management
-- **🌐 Multi-Network Support**: Works on both Sepolia testnet and local Hardhat node
-- **📦 Monorepo Structure**: Organized packages for SDK, contracts, and frontend
+## Stack
 
-## 🧰 Scripts overview
+- **Contracts:** Solidity 0.8.27, `@fhevm/solidity ^0.11.1`, `@openzeppelin/confidential-contracts 0.3.1`, Hardhat
+- **Frontend:** Next.js 15, React 19, Wagmi 2, Viem 2, RainbowKit, `@zama-fhe/relayer-sdk 0.4.2`
+- **FHE SDK:** `@fhevm-sdk` workspace package (`useFHEEncryption`, `useFHEDecrypt`)
 
-| Script                   | What it does                                                   |
-| ------------------------ | -------------------------------------------------------------- |
-| `pnpm dev`              | Starts the frontend dev server for the React template.        |
-| `pnpm test`             | Runs the frontend tests in watch mode.                        |
-| `pnpm lint`             | Lints the project using the configured ESLint rules.          |
-| `pnpm build`            | Builds the production bundle for deployment.                  |
-| `pnpm preview`          | Serves the built app locally to verify the production build.  |
+## Quick Start
 
-## 📋 Prerequinextjss
+### Prerequisites
 
-Before you begin, ensure you have:
+- Node.js v18+
+- pnpm
 
-- **Node.js** (v18 or higher)
-- **pnpm** package manager
-- **MetaMask** browser extension
-- **Git** for cloning the repository
-
-## 🛠️ Quick Start
-
-### 1. Clone and Setup
+### Setup
 
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd fhevm-react-template
-
-# Initialize submodules (includes fhevm-hardhat-template)
-git submodule update --init --recursive
-
-# Install dependencies
 pnpm install
+
+# Set Hardhat vars
+cd packages/hardhat
+npx hardhat vars set DEPLOYER_PK "0x..."
+npx hardhat vars set ALCHEMY_API_KEY "your_key"
+npx hardhat vars set ETHERSCAN_API_KEY "your_key"
 ```
 
-### 2. Environment Configuration
-
-Set up your Hardhat environment variables by following the [FHEVM documentation](https://docs.zama.ai/protocol/solidity-guides/getting-started/setup#set-up-the-hardhat-configuration-variables-optional):
-
-- `MNEMONIC`: Your wallet mnemonic phrase
-- `INFURA_API_KEY`: Your Infura API key for Sepolia
-
-### 3. Start Development Environment
-
-**Option A: Local Development (Recommended for testing)**
+### Run Tests (local mock, no Docker)
 
 ```bash
-# Terminal 1: Start local Hardhat node
-pnpm chain
-# RPC URL: http://127.0.0.1:8545 | Chain ID: 31337
-
-# Terminal 2: Deploy contracts to localhost
-pnpm deploy:localhost
-
-# Terminal 3: Start the frontend
-pnpm start
+cd packages/hardhat
+pnpm test           # 55 tests
+pnpm coverage       # 98% line coverage
 ```
 
-**Option B: Sepolia Testnet**
+### Deploy to Sepolia
 
 ```bash
-# Deploy to Sepolia testnet
+cd packages/hardhat
 pnpm deploy:sepolia
 
-# Start the frontend
-pnpm start
+# Generate frontend contract data
+npx ts-node scripts/generateDeployedContracts.ts sepolia
 ```
 
-### 4. Connect MetaMask
+### Start Frontend
 
-1. Open [http://localhost:3000](http://localhost:3000) in your browser
-2. Click "Connect Wallet" and select MetaMask
-3. If using localhost, add the Hardhat network to MetaMask:
-   - **Network Name**: Hardhat Local
-   - **RPC URL**: `http://127.0.0.1:8545`
-   - **Chain ID**: `31337`
-   - **Currency Symbol**: `ETH`
-
-### ⚠️ Common pitfalls
-
-- If contracts are not found, make sure submodules are initialized with  
-  `git submodule update --init --recursive` and that you have run `pnpm install`.
-- If the frontend shows network or RPC errors, double-check that `MNEMONIC`
-  and `INFURA_API_KEY` are correctly set in your Hardhat environment.
-- If the app builds but cannot read contract state, verify that
-  `NEXT_PUBLIC_ALCHEMY_API_KEY` and `packages/nextjs/contracts/deployedContracts.ts`
-  point to the right network and deployed addresses.
-
-### ⚠️ Sepolia Production note
-
-- In production, `NEXT_PUBLIC_ALCHEMY_API_KEY` must be set (see `packages/nextjs/scaffold.config.ts`). The app throws if missing.
-- Ensure `packages/nextjs/contracts/deployedContracts.ts` points to your live contract addresses.
-- Optional: set `NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID` for better WalletConnect reliability.
-- Optional: add per-chain RPCs via `rpcOverrides` in `packages/nextjs/scaffold.config.ts`.
-
-## 🔧 Troubleshooting
-
-### Common MetaMask + Hardhat Issues
-
-When developing with MetaMask and Hardhat, you may encounter these common issues:
-
-#### ❌ Nonce Mismatch Error
-
-**Problem**: MetaMask tracks transaction nonces, but when you restart Hardhat, the node resets while MetaMask doesn't update its tracking.
-
-**Solution**:
-1. Open MetaMask extension
-2. Select the Hardhat network
-3. Go to **Settings** → **Advanced**
-4. Click **"Clear Activity Tab"** (red button)
-5. This resets MetaMask's nonce tracking
-
-#### ❌ Cached View Function Results
-
-**Problem**: MetaMask caches smart contract view function results. After restarting Hardhat, you may see outdated data.
-
-**Solution**:
-1. **Restart your entire browser** (not just refresh the page)
-2. MetaMask's cache is stored in extension memory and requires a full browser restart to clear
-
-> 💡 **Pro Tip**: Always restart your browser after restarting Hardhat to avoid cache issues.
-
-For more details, see the [MetaMask development guide](https://docs.metamask.io/wallet/how-to/run-devnet/).
-
-## 📁 Project Structure
-
-This template uses a monorepo structure with three main packages:
-
-```
-fhevm-react-template/
-├── packages/
-│   ├── fhevm-hardhat-template/    # Smart contracts & deployment
-│   ├── fhevm-sdk/                 # FHEVM SDK package
-│   └── nextjs/                      # React frontend application
-└── scripts/                       # Build and deployment scripts
+```bash
+pnpm dev
+# Open http://localhost:3000
 ```
 
-### Key Components
+## Project Structure
 
-#### 🔗 FHEVM Integration (`packages/nextjs/hooks/fhecounter-example/`)
-- **`useFHECounterWagmi.tsx`**: Example hook demonstrating FHEVM contract interaction
-- Essential hooks for FHEVM-enabled smart contract communication
-- Easily copyable to any FHEVM + React project
+```
+packages/
+  hardhat/          Smart contracts, tests, deploy scripts
+    contracts/
+      MockUSDC.sol              ERC-20 testnet USDC (open mint, 6 decimals)
+      ConfidentialUSDC.sol      ERC-7984 wrapper (wrap/unwrap USDC <-> cUSDC)
+      ConfidentialPayroll.sol   Employee registry, encrypted salaries, payroll execution
+      interfaces/
+        IConfidentialUSDC.sol   Minimal interface for ConfidentialPayroll
+    deploy/                     hardhat-deploy scripts (Sepolia)
+    test/                       Unit + E2E tests (mock coprocessor)
+  nextjs/           Frontend (Next.js 15 App Router)
+  fhevm-sdk/        FHE hook library (workspace package)
+```
 
-#### 🎣 Wallet Management (`packages/nextjs/hooks/helper/`)
-- MetaMask wallet provider hooks
-- Compatible with EIP-6963 standard
-- Easily adaptable for other wallet providers
+## Architecture
 
-#### 🔧 Flexibility
-- Replace `ethers.js` with `Wagmi` or other React-friendly libraries
-- Modular architecture for easy customization
-- Support for multiple wallet providers
+See [docs/architecture.md](docs/architecture.md) for Mermaid diagrams covering contract dependencies, FHE coprocessor, encryption lifecycle, payroll execution, unwrap flow, and trust boundaries.
 
-## 📚 Additional Resources
+Full technical spec: [docs/PRD.md](docs/PRD.md)
 
-### Official Documentation
-- [FHEVM Documentation](https://docs.zama.ai/protocol/solidity-guides/) - Complete FHEVM guide
-- [FHEVM Hardhat Guide](https://docs.zama.ai/protocol/solidity-guides/development-guide/hardhat) - Hardhat integration
-- [Relayer SDK Documentation](https://docs.zama.ai/protocol/relayer-sdk-guides/) - SDK reference
-- [Environment Setup](https://docs.zama.ai/protocol/solidity-guides/getting-started/setup#set-up-the-hardhat-configuration-variables-optional) - MNEMONIC & API keys
+## Scripts
 
-### Development Tools
-- [MetaMask + Hardhat Setup](https://docs.metamask.io/wallet/how-to/run-devnet/) - Local development
-- [React Documentation](https://reactjs.org/) - React framework guide
+| Script | Description |
+|---|---|
+| `pnpm dev` | Start frontend dev server |
+| `pnpm test` | Run contract tests (mock FHE) |
+| `pnpm deploy:sepolia` | Deploy contracts to Sepolia |
+| `pnpm lint:sol` | Lint Solidity with solhint |
+| `pnpm coverage` | Generate coverage report |
 
-### Community & Support
-- [FHEVM Discord](https://discord.com/invite/zama) - Community support
-- [GitHub Issues](https://github.com/zama-ai/fhevm-react-template/issues) - Bug reports & feature requests
+## License
 
-## 📄 License
-
-This project is licensed under the **BSD-3-Clause-Clear License**. See the [LICENSE](LICENSE) file for details.
+BSD-3-Clause-Clear
