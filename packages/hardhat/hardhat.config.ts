@@ -42,6 +42,11 @@ const config: HardhatUserConfig = {
       chainId: 31337,
       url: "http://localhost:8545",
     },
+    localhost: {
+      accounts: [DEPLOYER_PK],
+      chainId: 31337,
+      url: "http://localhost:8545",
+    },
     sepolia: {
       accounts: [DEPLOYER_PK],
       chainId: 11155111,

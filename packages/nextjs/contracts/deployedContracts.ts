@@ -4,7 +4,7 @@
  */
 import { GenericContractsDeclaration } from "~~/utils/helper/contract";
 
-const deployedContracts = {
+const baseDeployedContracts = {
   11155111: {
     MockUSDC: {
         address: "0x7FEc53132c406d74995FA36579681C18F1b76C9B",
@@ -1858,6 +1858,11 @@ const deployedContracts = {
         ]
     }
 },
+} as const;
+
+const deployedContracts = {
+  ...baseDeployedContracts,
+  31337: baseDeployedContracts[11155111],
 } as const;
 
 export default deployedContracts satisfies GenericContractsDeclaration;

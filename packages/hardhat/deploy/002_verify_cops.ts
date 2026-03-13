@@ -3,10 +3,16 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 
 /**
  * Verify all COPS contracts on Etherscan.
- * Only runs on Sepolia (skipped on localhost/hardhat).
+ * Only runs on Sepolia (skipped on localhost/hardhat/anvil and other local chains).
  */
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-  if (hre.network.name === "hardhat" || hre.network.name === "localhost") {
+  const chainId = hre.network.config.chainId;
+  if (
+    hre.network.name === "hardhat" ||
+    hre.network.name === "localhost" ||
+    hre.network.name === "anvil" ||
+    chainId === 31337
+  ) {
     return;
   }
 

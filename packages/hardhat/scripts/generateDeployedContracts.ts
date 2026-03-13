@@ -28,7 +28,7 @@ function main() {
 
   if (!fs.existsSync(DEPLOYMENTS_DIR)) {
     console.error(`Deployments directory not found: ${DEPLOYMENTS_DIR}`);
-    console.error(`Run 'pnpm deploy:${NETWORK_NAME}' first.`);
+    console.error(`Run 'npx hardhat deploy --network ${NETWORK_NAME}' first (or use a matching 'pnpm deploy:<network>' script if available).`);
     process.exit(1);
   }
 
