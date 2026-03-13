@@ -14,10 +14,19 @@ import "./tasks/accounts";
 // Run 'npx hardhat vars setup' to see the list of variables that need to be set
 // Required: DEPLOYER_PK, ALCHEMY_API_KEY, ETHERSCAN_API_KEY
 
-const DEPLOYER_PK: string = vars.get(
-  "DEPLOYER_PK",
-  "0x0000000000000000000000000000000000000000000000000000000000000001",
-);
+const DEPLOYER_PK: string = vars.get("DEPLOYER_PK", "");
+
+const hardhatNetwork = process.env.HARDHAT_NETWORK;
+if (
+  !DEPLOYER_PK &&
+  (hardhatNetwork === "sepolia" || hardhatNetwork === "anvil")
+) {
+  throw new Error(
+    "DEPLOYER_PK is required when using the 'sepolia' or 'anvil' networks. " +
+      "Please set it with `npx hardhat vars set DEPLOYER_PK`.",
+  );
+}
+
 const ALCHEMY_API_KEY: string = vars.get("ALCHEMY_API_KEY", "");
 
 const config: HardhatUserConfig = {
