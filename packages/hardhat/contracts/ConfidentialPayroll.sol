@@ -222,6 +222,7 @@ contract ConfidentialPayroll is ZamaEthereumConfig, Ownable2Step, ReentrancyGuar
         FHE.allowThis(salary);
         FHE.allow(salary, owner());
         FHE.allow(salary, wallet);
+        FHE.allow(salary, address(cUSDC));
 
         _employees.push(
             Employee({wallet: wallet, name: name, role: role, salary: salary, active: true, lastPaidAt: 0})
