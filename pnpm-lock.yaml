@@ -233,6 +233,9 @@ importers:
       next-themes:
         specifier: ~0.3.0
         version: 0.3.0(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+      papaparse:
+        specifier: ^5.5.3
+        version: 5.5.3
       qrcode.react:
         specifier: ~4.0.1
         version: 4.0.1(react@19.0.0)
@@ -270,6 +273,9 @@ importers:
       '@types/node':
         specifier: ~18.19.50
         version: 18.19.127
+      '@types/papaparse':
+        specifier: ^5.5.2
+        version: 5.5.2
       '@types/react':
         specifier: ~19.0.7
         version: 19.0.14
@@ -1970,6 +1976,9 @@ packages:
 
   '@types/node@22.7.5':
     resolution: {integrity: sha512-jML7s2NAzMWc//QSJ1a3prpk78cOPchGvXJsC3C6R6PSMoooztvRVQEz89gmBTBY1SPMaqo5teB4uNHPdetShQ==}
+
+  '@types/papaparse@5.5.2':
+    resolution: {integrity: sha512-gFnFp/JMzLHCwRf7tQHrNnfhN4eYBVYYI897CGX4MY1tzY9l2aLkVyx2IlKZ/SAqDbB3I1AOZW5gTMGGsqWliA==}
 
   '@types/pbkdf2@3.1.2':
     resolution: {integrity: sha512-uRwJqmiXmh9++aSu1VNEn3iIxWOhd8AHXNSdlaLfdAAdSTY9jYVeGWnzejM3dvrkbqE3/hyQkQQ29IFATEGlew==}
@@ -5661,6 +5670,9 @@ packages:
   package-json@8.1.1:
     resolution: {integrity: sha512-cbH9IAIJHNj9uXi196JVsRlt7cHKak6u/e6AkL/bkRelZ7rlL3X1YKxsZwa36xipOEKAsdtmaG6aAJoM1fx2zA==}
     engines: {node: '>=14.16'}
+
+  papaparse@5.5.3:
+    resolution: {integrity: sha512-5QvjGxYVjxO59MGU2lHVYpRWBBtKHnlIAcSe1uNFCkkptUh63NFRj0FJQm7nR67puEruUci/ZkjmEFrjCAyP4A==}
 
   parent-module@1.0.1:
     resolution: {integrity: sha512-GQ2EWRpQV8/o+Aw8YqtfZZPfNRWZYkbidE9k5rpl/hC3vtHHBfGm2Ifi6qWV+coDGkrUKZAxE3Lot5kcsRlh+g==}
@@ -9644,7 +9656,7 @@ snapshots:
 
   '@types/bn.js@5.2.0':
     dependencies:
-      '@types/node': 20.19.33
+      '@types/node': 22.7.5
 
   '@types/chai-as-promised@7.1.8':
     dependencies:
@@ -9661,7 +9673,7 @@ snapshots:
   '@types/glob@7.2.0':
     dependencies:
       '@types/minimatch': 6.0.0
-      '@types/node': 20.19.33
+      '@types/node': 22.7.5
 
   '@types/http-cache-semantics@4.0.4': {}
 
@@ -9677,7 +9689,7 @@ snapshots:
 
   '@types/mkdirp@0.5.2':
     dependencies:
-      '@types/node': 20.19.33
+      '@types/node': 22.7.5
 
   '@types/mocha@10.0.10': {}
 
@@ -9701,9 +9713,13 @@ snapshots:
     dependencies:
       undici-types: 6.19.8
 
+  '@types/papaparse@5.5.2':
+    dependencies:
+      '@types/node': 22.7.5
+
   '@types/pbkdf2@3.1.2':
     dependencies:
-      '@types/node': 20.19.33
+      '@types/node': 22.7.5
 
   '@types/prettier@2.7.3': {}
 
@@ -9715,11 +9731,11 @@ snapshots:
 
   '@types/resolve@0.0.8':
     dependencies:
-      '@types/node': 20.19.33
+      '@types/node': 22.7.5
 
   '@types/secp256k1@4.0.7':
     dependencies:
-      '@types/node': 20.19.33
+      '@types/node': 22.7.5
 
   '@types/trusted-types@2.0.7': {}
 
@@ -14496,6 +14512,8 @@ snapshots:
       registry-url: 6.0.1
       semver: 7.7.2
 
+  papaparse@5.5.3: {}
+
   parent-module@1.0.1:
     dependencies:
       callsites: 3.1.0
@@ -15075,7 +15093,7 @@ snapshots:
     dependencies:
       inherits: 2.0.4
       safe-buffer: 5.2.1
-      to-buffer: 1.2.1
+      to-buffer: 1.2.2
 
   sha1@1.1.1:
     dependencies:
