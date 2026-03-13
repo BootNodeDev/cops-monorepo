@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useFhevm } from "@fhevm-sdk";
 import { useAccount } from "wagmi";
 import { useReadContract } from "wagmi";
-import { EncryptedAmount, Spinner, StatusText } from "~~/components/ui";
+import { CryptoAmount, EncryptedAmount, Spinner, StatusText } from "~~/components/ui";
 import { useContractAddresses, useEmployeeBalance, useEmployeeSalary, useUnwrap } from "~~/hooks/cops";
 import { usePayrollEmployees } from "~~/hooks/cops";
 import { useWagmiEthers } from "~~/hooks/wagmi/useWagmiEthers";
@@ -74,6 +74,16 @@ export default function EmployeePage() {
     walletAddress: address,
   });
 
+  // ─── Plain USDC Balance ─────────────────────────────────────────────
+  const usdcBalanceResult = useReadContract({
+    address: contracts.mockUsdcAddress,
+    abi: contracts.mockUsdcAbi as any,
+    functionName: "balanceOf",
+    args: address ? [address] : undefined,
+    query: { enabled: Boolean(contracts.mockUsdcAddress && address) },
+  });
+  const usdcBalance = (usdcBalanceResult.data as bigint) ?? 0n;
+
   // ─── Unwrap ──────────────────────────────────────────────────────────
   const [unwrapAmount, setUnwrapAmount] = useState("");
   const unwrapBigInt = useMemo(() => {
@@ -82,6 +92,11 @@ export default function EmployeePage() {
     return BigInt(Math.round(n * Number(USDC_MULTIPLIER)));
   }, [unwrapAmount]);
 
+  const handleUnwrapComplete = useCallback(() => {
+    balance.refetch();
+    usdcBalanceResult.refetch();
+  }, [balance, usdcBalanceResult]);
+
   const unwrap = useUnwrap({
     instance,
     ethersSigner,
@@ -89,6 +104,7 @@ export default function EmployeePage() {
     cUsdcAbi: contracts.cUsdcAbi,
     walletAddress: address,
     amount: unwrapBigInt,
+    onComplete: handleUnwrapComplete,
   });
 
   if (!isConnected) {
@@ -173,6 +189,19 @@ export default function EmployeePage() {
             </button>
           </div>
           <StatusText message={balance.message} />
+        </div>
+      </div>
+
+      {/* ─── Plain USDC Balance ─────────────────────────────────────── */}
+      <div className="card bg-base-200 shadow">
+        <div className="card-body">
+          <h2 className="card-title">USDC Balance (plain)</h2>
+          <div className="flex items-center gap-4">
+            <CryptoAmount amount={usdcBalance} className="text-xl" />
+            <button className="btn btn-xs btn-ghost" onClick={() => usdcBalanceResult.refetch()}>
+              {usdcBalanceResult.isFetching ? <Spinner size="xs" /> : "Refresh"}
+            </button>
+          </div>
         </div>
       </div>
 
