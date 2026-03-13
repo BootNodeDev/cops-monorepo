@@ -16,6 +16,7 @@ export function useEmployeeBalance(params: {
 }) {
   const { instance, ethersSigner, chainId, cUsdcAddress, cUsdcAbi, walletAddress } = params;
   const { storage } = useInMemoryStorage();
+  const [isWorking, setIsWorking] = useState(false);
   const [message, setMessage] = useState("");
 
   const balanceResult = useReadContract({
@@ -47,26 +48,31 @@ export function useEmployeeBalance(params: {
     return typeof val === "bigint" ? val : undefined;
   }, [balanceHandle, results]);
 
-  const decryptBalance = useCallback(async () => {
-    if (!decrypt) return;
-    setMessage("Decrypting balance...");
-    await decrypt();
-    setMessage("");
-  }, [decrypt]);
-
+  // Clear working flag when result arrives
   useEffect(() => {
-    if (balanceClear !== undefined) setMessage("");
+    if (balanceClear !== undefined) {
+      setIsWorking(false);
+      setMessage("");
+    }
   }, [balanceClear]);
 
+  const decryptBalance = useCallback(async () => {
+    if (!decrypt || isWorking) return;
+    setIsWorking(true);
+    setMessage("Signing decryption request... (wallet popup)");
+    await decrypt();
+  }, [decrypt, isWorking]);
+
   return {
-    canDecrypt: Boolean(
-      instance && ethersSigner && balanceHandle && balanceHandle !== ethers.ZeroHash && !isDecrypting,
-    ),
+    canDecrypt: Boolean(instance && ethersSigner && balanceHandle && balanceHandle !== ethers.ZeroHash && !isWorking),
     decrypt: decryptBalance,
-    isDecrypting,
+    isDecrypting: isWorking || isDecrypting,
     balanceHandle,
     balanceClear,
     message,
-    refetch: balanceResult.refetch,
+    refetch: useCallback(() => {
+      setIsWorking(false);
+      balanceResult.refetch();
+    }, [balanceResult]),
   };
 }

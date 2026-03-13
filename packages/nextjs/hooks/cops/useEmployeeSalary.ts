@@ -16,7 +16,7 @@ export function useEmployeeSalary(params: {
   const { instance, ethersSigner, chainId, payrollAddress, payrollAbi, employeeId } = params;
   const { storage } = useInMemoryStorage();
   const [salaryHandle, setSalaryHandle] = useState<string | undefined>();
-  const [isFetchingHandle, setIsFetchingHandle] = useState(false);
+  const [isWorking, setIsWorking] = useState(false);
   const [message, setMessage] = useState("");
 
   const requests = useMemo(() => {
@@ -38,37 +38,43 @@ export function useEmployeeSalary(params: {
     return typeof val === "bigint" ? val : undefined;
   }, [salaryHandle, results]);
 
+  // Clear working flag when we get the result
+  useEffect(() => {
+    if (salaryClear !== undefined) {
+      setIsWorking(false);
+      setMessage("");
+    }
+  }, [salaryClear]);
+
+  // Trigger decrypt when handle is ready
+  useEffect(() => {
+    if (salaryHandle && !salaryClear && decrypt && isWorking) {
+      setMessage("Signing decryption request... (wallet popup)");
+      decrypt();
+    }
+  }, [salaryHandle, salaryClear, decrypt, isWorking]);
+
   const fetchAndDecrypt = useCallback(async () => {
     if (!ethersSigner || !payrollAddress || !payrollAbi || !employeeId) return;
+    if (isWorking) return;
 
-    setIsFetchingHandle(true);
+    setIsWorking(true);
     setMessage("Fetching salary handle...");
     try {
       const contract = new ethers.Contract(payrollAddress, payrollAbi as ethers.InterfaceAbi, ethersSigner);
       const handle = await contract.getSalary.staticCall(employeeId);
       setSalaryHandle(handle as string);
-      setMessage("Decrypting salary...");
+      setMessage("Preparing decryption...");
     } catch (e) {
+      setIsWorking(false);
       setMessage(`Failed: ${e instanceof Error ? e.message : String(e)}`);
-    } finally {
-      setIsFetchingHandle(false);
     }
-  }, [ethersSigner, payrollAddress, payrollAbi, employeeId]);
-
-  useEffect(() => {
-    if (salaryHandle && !salaryClear && decrypt) {
-      decrypt();
-    }
-  }, [salaryHandle, salaryClear, decrypt]);
-
-  useEffect(() => {
-    if (salaryClear !== undefined) setMessage("");
-  }, [salaryClear]);
+  }, [ethersSigner, payrollAddress, payrollAbi, employeeId, isWorking]);
 
   return {
-    canDecrypt: Boolean(instance && ethersSigner && payrollAddress && employeeId && !isFetchingHandle && !isDecrypting),
+    canDecrypt: Boolean(instance && ethersSigner && payrollAddress && employeeId && !isWorking),
     decrypt: fetchAndDecrypt,
-    isDecrypting: isFetchingHandle || isDecrypting,
+    isDecrypting: isWorking || isDecrypting,
     salaryHandle,
     salaryClear,
     message,
