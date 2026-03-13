@@ -12,6 +12,8 @@ import {IConfidentialUSDC} from "./interfaces/IConfidentialUSDC.sol";
 /// @title ConfidentialPayroll
 /// @author COPS Team
 /// @notice Stores encrypted employee salaries and executes confidential payroll runs.
+/// @dev ZamaEthereumConfig must be first in the inheritance list to initialize the
+///      FHE coprocessor before any other base constructor runs.
 ///
 /// Funding: employer calls cUSDC.wrap(address(this), amount) directly — no depositFunds()
 /// needed on this contract. ERC7984's isOperator(address(this), address(this)) = true
@@ -131,6 +133,9 @@ contract ConfidentialPayroll is ZamaEthereumConfig, Ownable2Step, ReentrancyGuar
 
     /// @notice Transfer each active employee's monthly salary from this contract's
     ///         cUSDC balance to their wallet.
+    /// @dev ERC7984 uses saturating arithmetic: insufficient balance silently transfers 0,
+    ///      not revert. PaymentFailed only fires on hard reverts (ACL, infrastructure).
+    ///      Employer must verify funding covers total payroll before calling.
     function runPayroll() external onlyOwner nonReentrant whenNotPaused {
         uint256 count = 0;
         uint256 total = _employees.length;
@@ -172,6 +177,8 @@ contract ConfidentialPayroll is ZamaEthereumConfig, Ownable2Step, ReentrancyGuar
 
     /// @notice Returns the salary handle with transient ACL access for the caller.
     ///         Only the employer (owner) or the employee themselves can call this.
+    /// @dev The returned handle uses allowTransient — accessible only within the current
+    ///      transaction. Do not store the handle in persistent storage for cross-tx use.
     /// @param id The 1-indexed employee ID.
     /// @return The euint64 salary handle with transient ACL for msg.sender.
     function getSalary(uint256 id) external returns (euint64) {
@@ -208,6 +215,9 @@ contract ConfidentialPayroll is ZamaEthereumConfig, Ownable2Step, ReentrancyGuar
         if (wallet == address(0)) revert ZeroAddress();
         uint256 existingId = walletToId[wallet];
         if (existingId != 0 && _employees[existingId - 1].active) revert DuplicateEmployee();
+        if (existingId != 0) {
+            _employees[existingId - 1].wallet = address(0);
+        }
 
         FHE.allowThis(salary);
         FHE.allow(salary, owner());

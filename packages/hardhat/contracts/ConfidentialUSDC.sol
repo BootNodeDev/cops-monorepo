@@ -10,6 +10,8 @@ import {ERC7984ERC20Wrapper} from "@openzeppelin/confidential-contracts/token/ER
 /// @title ConfidentialUSDC
 /// @author COPS Team
 /// @notice ERC-7984 confidential wrapper over plain USDC.
+/// @dev ZamaEthereumConfig must be first in the inheritance list to initialize the
+///      FHE coprocessor before any other base constructor runs.
 ///
 /// Funding the payroll contract:
 ///   1. USDC.approve(address(this), amount)          — caller approves cUSDC to spend USDC
