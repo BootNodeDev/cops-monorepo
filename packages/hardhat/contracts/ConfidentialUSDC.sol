@@ -4,10 +4,11 @@ pragma solidity ^0.8.27;
 import {ZamaEthereumConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
 import {IERC20} from "@openzeppelin/contracts/interfaces/IERC20.sol";
 import {ERC7984} from "@openzeppelin/confidential-contracts/token/ERC7984/ERC7984.sol";
-import {ERC7984ERC20Wrapper} from
-    "@openzeppelin/confidential-contracts/token/ERC7984/extensions/ERC7984ERC20Wrapper.sol";
+// solhint-disable-next-line max-line-length
+import {ERC7984ERC20Wrapper} from "@openzeppelin/confidential-contracts/token/ERC7984/extensions/ERC7984ERC20Wrapper.sol";
 
 /// @title ConfidentialUSDC
+/// @author COPS Team
 /// @notice ERC-7984 confidential wrapper over plain USDC.
 ///
 /// Funding the payroll contract:
@@ -18,14 +19,19 @@ import {ERC7984ERC20Wrapper} from
 ///   1. cUSDC.unwrap(from, to, encAmount, proof)            — burns cUSDC, emits UnwrapRequested
 ///   2. cUSDC.finalizeUnwrap(burntHandle, cleartext, proof) — KMS proof → sends plain USDC
 contract ConfidentialUSDC is ZamaEthereumConfig, ERC7984ERC20Wrapper {
-    event USDCWrapped(address indexed from, address indexed to, uint256 amount);
+    /// @notice Emitted when USDC is wrapped into cUSDC.
+    /// @param from The address that deposited USDC.
+    /// @param to The address that receives cUSDC.
+    /// @param amount The amount of USDC wrapped (6-decimal micro-units).
+    event USDCWrapped(address indexed from, address indexed to, uint256 indexed amount);
 
-    constructor(address usdcAddress)
-        ERC7984("Confidential USDC", "cUSDC", "")
-        ERC7984ERC20Wrapper(IERC20(usdcAddress))
-    {}
+    constructor(
+        address usdcAddress
+    ) ERC7984("Confidential USDC", "cUSDC", "") ERC7984ERC20Wrapper(IERC20(usdcAddress)) {}
 
-    /// @notice Override to emit a tracking event. Caller must approve this contract first.
+    /// @notice Wrap plain USDC into confidential cUSDC. Caller must approve this contract first.
+    /// @param to The address that receives cUSDC (can be a payroll contract).
+    /// @param amount The amount of USDC to wrap (6-decimal micro-units).
     function wrap(address to, uint256 amount) public override {
         super.wrap(to, amount);
         emit USDCWrapped(msg.sender, to, amount);
