@@ -73,8 +73,11 @@ importers:
       '@fhevm/solidity':
         specifier: ^0.11.1
         version: 0.11.1
+      '@openzeppelin/confidential-contracts':
+        specifier: 0.3.1
+        version: 0.3.1(@fhevm/solidity@0.11.1)(@openzeppelin/contracts-upgradeable@5.6.1(@openzeppelin/contracts@5.6.1))(@openzeppelin/contracts@5.6.1)
       '@openzeppelin/contracts':
-        specifier: ^5.0.2
+        specifier: ^5.6.1
         version: 5.6.1
       encrypted-types:
         specifier: ^0.0.4
@@ -1443,6 +1446,18 @@ packages:
   '@oclif/plugin-plugins@5.4.47':
     resolution: {integrity: sha512-eUWNbyYwKPbH+Ca98eI2OBZ6IioWM1aJ6SGp9TrVGRu2qNeDtG/qnqemv3v5qcHzPK211CPSvHJBFYef3J9rBg==}
     engines: {node: '>=18.0.0'}
+
+  '@openzeppelin/confidential-contracts@0.3.1':
+    resolution: {integrity: sha512-QudxmMktqHE+oUuBKIR0vTceuQnQTtTT7s+iJqTP6c3DLiLNiTSHLrxIG0bd3fVyS1ZSjzhFhCVpcLZdQXsShg==}
+    peerDependencies:
+      '@fhevm/solidity': 0.9.1
+      '@openzeppelin/contracts': ^5.4.0
+      '@openzeppelin/contracts-upgradeable': ^5.4.0
+
+  '@openzeppelin/contracts-upgradeable@5.6.1':
+    resolution: {integrity: sha512-n4a/vfRs114lXyUdYg7pyY8LvFKWvCDF5lEcRRAVxap8g6ZEdLqm+9tmt2zTtRHcNMxTYp9y5t6KBof4tHp7Og==}
+    peerDependencies:
+      '@openzeppelin/contracts': 5.6.1
 
   '@openzeppelin/contracts@5.6.1':
     resolution: {integrity: sha512-Ly6SlsVJ3mj+b18W3R8gNufB7dTICT105fJhodGAGgyC2oqnBAhqSiNDJ8V8DLY05cCz81GLI0CU5vNYA1EC/w==}
@@ -8944,6 +8959,16 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@openzeppelin/confidential-contracts@0.3.1(@fhevm/solidity@0.11.1)(@openzeppelin/contracts-upgradeable@5.6.1(@openzeppelin/contracts@5.6.1))(@openzeppelin/contracts@5.6.1)':
+    dependencies:
+      '@fhevm/solidity': 0.11.1
+      '@openzeppelin/contracts': 5.6.1
+      '@openzeppelin/contracts-upgradeable': 5.6.1(@openzeppelin/contracts@5.6.1)
+
+  '@openzeppelin/contracts-upgradeable@5.6.1(@openzeppelin/contracts@5.6.1)':
+    dependencies:
+      '@openzeppelin/contracts': 5.6.1
+
   '@openzeppelin/contracts@5.6.1': {}
 
   '@paulmillr/qr@0.2.1': {}
@@ -12136,7 +12161,7 @@ snapshots:
       '@typescript-eslint/parser': 8.44.0(eslint@9.23.0(jiti@2.6.0))(typescript@5.8.3)
       eslint: 9.23.0(jiti@2.6.0)
       eslint-import-resolver-node: 0.3.9
-      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.44.0(eslint@9.23.0(jiti@2.6.0))(typescript@5.8.3))(eslint@9.23.0(jiti@2.6.0)))(eslint@9.23.0(jiti@2.6.0))
+      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0)(eslint@9.23.0(jiti@2.6.0))
       eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.44.0(eslint@9.23.0(jiti@2.6.0))(typescript@5.8.3))(eslint-import-resolver-typescript@3.10.1)(eslint@9.23.0(jiti@2.6.0))
       eslint-plugin-jsx-a11y: 6.10.2(eslint@9.23.0(jiti@2.6.0))
       eslint-plugin-react: 7.37.5(eslint@9.23.0(jiti@2.6.0))
@@ -12164,7 +12189,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.44.0(eslint@9.23.0(jiti@2.6.0))(typescript@5.8.3))(eslint@9.23.0(jiti@2.6.0)))(eslint@9.23.0(jiti@2.6.0)):
+  eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0)(eslint@9.23.0(jiti@2.6.0)):
     dependencies:
       '@nolyfill/is-core-module': 1.0.39
       debug: 4.4.3(supports-color@8.1.1)
@@ -12179,14 +12204,14 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-module-utils@2.12.1(@typescript-eslint/parser@8.44.0(eslint@9.23.0(jiti@2.6.0))(typescript@5.8.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.44.0(eslint@9.23.0(jiti@2.6.0))(typescript@5.8.3))(eslint@9.23.0(jiti@2.6.0)))(eslint@9.23.0(jiti@2.6.0)))(eslint@9.23.0(jiti@2.6.0)):
+  eslint-module-utils@2.12.1(@typescript-eslint/parser@8.44.0(eslint@9.23.0(jiti@2.6.0))(typescript@5.8.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.10.1)(eslint@9.23.0(jiti@2.6.0)):
     dependencies:
       debug: 3.2.7
     optionalDependencies:
       '@typescript-eslint/parser': 8.44.0(eslint@9.23.0(jiti@2.6.0))(typescript@5.8.3)
       eslint: 9.23.0(jiti@2.6.0)
       eslint-import-resolver-node: 0.3.9
-      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.44.0(eslint@9.23.0(jiti@2.6.0))(typescript@5.8.3))(eslint@9.23.0(jiti@2.6.0)))(eslint@9.23.0(jiti@2.6.0))
+      eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0)(eslint@9.23.0(jiti@2.6.0))
     transitivePeerDependencies:
       - supports-color
 
@@ -12201,7 +12226,7 @@ snapshots:
       doctrine: 2.1.0
       eslint: 9.23.0(jiti@2.6.0)
       eslint-import-resolver-node: 0.3.9
-      eslint-module-utils: 2.12.1(@typescript-eslint/parser@8.44.0(eslint@9.23.0(jiti@2.6.0))(typescript@5.8.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.10.1(eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.44.0(eslint@9.23.0(jiti@2.6.0))(typescript@5.8.3))(eslint@9.23.0(jiti@2.6.0)))(eslint@9.23.0(jiti@2.6.0)))(eslint@9.23.0(jiti@2.6.0))
+      eslint-module-utils: 2.12.1(@typescript-eslint/parser@8.44.0(eslint@9.23.0(jiti@2.6.0))(typescript@5.8.3))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.10.1)(eslint@9.23.0(jiti@2.6.0))
       hasown: 2.0.2
       is-core-module: 2.16.1
       is-glob: 4.0.3

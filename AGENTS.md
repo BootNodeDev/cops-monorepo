@@ -10,8 +10,8 @@ Full technical spec: [`docs/PRD.md`](docs/PRD.md) (v1.0.0) — read this before 
 ### Contracts (`packages/hardhat/`)
 - Solidity `0.8.27`
 - `@fhevm/solidity ^0.11.1` — FHE library (`FHE.*` namespace, NOT `TFHE.*`)
-- `@openzeppelin/contracts ^5.0.2`
-- `lib/confidential/` — local copy of the ERC7984 confidential token library
+- `@openzeppelin/contracts ^5.6.1`
+- `@openzeppelin/confidential-contracts 0.3.1` — ERC7984 confidential token library (npm, not local copy)
 - Hardhat + `@fhevm/hardhat-plugin ^0.4.2` + `@fhevm/mock-utils 0.4.2`
 
 ### Frontend (`packages/nextjs/`)
@@ -38,7 +38,7 @@ FHE.setCoprocessor(CoprocessorSetup.defaultConfig());
 ```solidity
 import {FHE, euint64, externalEuint64, ebool} from "@fhevm/solidity/lib/FHE.sol";
 import {ZamaEthereumConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
-import {ERC7984ERC20Wrapper} from "../lib/confidential/token/ERC7984/extensions/ERC7984ERC20Wrapper.sol";
+import {ERC7984ERC20Wrapper} from "@openzeppelin/confidential-contracts/token/ERC7984/extensions/ERC7984ERC20Wrapper.sol";
 ```
 
 **Re-encryption — return handle, not sealoutput:**
@@ -78,7 +78,8 @@ FHE.allow(salary, employeeWallet); // employee
 - **Token funding**: employer calls `cUSDC.wrap(payrollContractAddress, amount)` directly — no `depositFunds()` on ConfidentialPayroll.
 - **No setPayrollContract()**: ERC7984's `isOperator(holder, spender) = true` when `holder == spender` — payroll can `confidentialTransferFrom` its own balance natively.
 - **Salary immutability**: salaries are immutable after registration. To change: deactivate + re-add.
-- **lib/confidential/**: NOT the `@openzeppelin/confidential-contracts` npm package (peer dep conflict with @fhevm/solidity@^0.11.1). Use the local copy.
+- **ERC7984 library**: `@openzeppelin/confidential-contracts@0.3.1` npm package. Peer dep conflict with `@fhevm/solidity@^0.11.1` was resolved upstream — npm package works correctly (compile-time warning only).
+- **Peer dep override**: `confidential-contracts@0.3.1` declares peer `@fhevm/solidity@0.9.1` but we use `0.11.1`. Compiles and works — allowed explicitly via `pnpm.peerDependencyRules` in root `package.json`.
 - **Target network**: Sepolia testnet (chainId 11155111).
 - **No backend**: fully client-side. Vercel static deploy.
 
@@ -89,13 +90,13 @@ FHE.allow(salary, employeeWallet); // employee
 ```
 packages/hardhat/
 ├── contracts/
-│   ├── MockUSDC.sol
-│   ├── ConfidentialUSDC.sol      ← is ZamaEthereumConfig, ERC7984ERC20Wrapper
-│   ├── ConfidentialPayroll.sol   ← is ZamaEthereumConfig, Ownable2Step, ReentrancyGuard, Pausable
+│   ├── MockUSDC.sol               ← ERC20 (open mint, testnet only)
+│   ├── ConfidentialUSDC.sol       ← ZamaEthereumConfig, ERC7984ERC20Wrapper
+│   ├── ConfidentialPayroll.sol    ← ZamaEthereumConfig, Ownable2Step, ReentrancyGuard, Pausable
 │   └── interfaces/
-│       └── IConfidentialUSDC.sol
-└── lib/
-    └── confidential/             ← local copy (ERC7984, ERC7984ERC20Wrapper, FHESafeMath)
+│       └── IConfidentialUSDC.sol  ← minimal interface for ConfidentialPayroll
+└── node_modules/
+    └── @openzeppelin/confidential-contracts/  ← ERC7984, ERC7984ERC20Wrapper, FHESafeMath (npm)
 ```
 
 ---
