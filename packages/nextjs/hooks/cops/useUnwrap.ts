@@ -7,6 +7,10 @@ import type { Abi } from "viem";
 
 export type UnwrapStep = "idle" | "encrypting" | "requesting" | "waiting_kms" | "finalizing" | "done" | "error";
 
+const MAX_POLL_ATTEMPTS = 30;
+const POLL_BASE_DELAY_MS = 3000;
+const POLL_INCREMENT_MS = 1000;
+
 export function useUnwrap(params: {
   instance: FhevmInstance | undefined;
   ethersSigner: ethers.JsonRpcSigner | undefined;
@@ -36,17 +40,19 @@ export function useUnwrap(params: {
   );
 
   const unwrap = useCallback(async () => {
-    if (!canUnwrap || !ethersSigner || !cUsdcAddress || !cUsdcAbi || !walletAddress) return;
+    if (!canUnwrap || !instance || !ethersSigner || !cUsdcAddress || !cUsdcAbi || !walletAddress) return;
 
     setStep("encrypting");
     setMessage("Encrypting unwrap amount...");
 
     try {
+      // Step 1: Encrypt the unwrap amount
       const enc = await encryptWith(builder => {
         builder.add64(amount);
       });
       if (!enc) throw new Error("Encryption failed");
 
+      // Step 2: Submit unwrap tx (burns cUSDC, calls makePubliclyDecryptable)
       setStep("requesting");
       setMessage("Submitting unwrap request...");
 
@@ -70,72 +76,61 @@ export function useUnwrap(params: {
       });
 
       if (!unwrapEvent) {
-        // No event found — the unwrap may still finalize via relayer
-        setStep("done");
-        setMessage("Unwrap submitted. Check your USDC balance shortly.");
-        onComplete?.();
-        return;
+        throw new Error("UnwrapRequested event not found in transaction receipt");
       }
 
       const parsed = contract.interface.parseLog({
         topics: [...unwrapEvent.topics],
         data: unwrapEvent.data,
       });
-      const burntHandle = parsed?.args?.[1]; // UnwrapRequested(receiver, amount)
+      // UnwrapRequested(address indexed receiver, euint64 amount)
+      const burntHandle = parsed?.args?.[1];
 
       if (!burntHandle) {
-        setStep("done");
-        setMessage("Unwrap submitted. Check your USDC balance shortly.");
-        onComplete?.();
-        return;
+        throw new Error("Could not extract burntAmount handle from UnwrapRequested event");
       }
 
-      // Wait for KMS to make the handle publicly decryptable
+      // Step 3: Poll KMS via publicDecrypt until proof is available
       setStep("waiting_kms");
-      setMessage("Waiting for KMS decryption proof (may take a few seconds)...");
+      setMessage("Waiting for KMS decryption proof...");
 
-      // Poll for the finalization — the KMS/relayer will process it
-      // We attempt finalizeUnwrap with increasing delays
-      let finalized = false;
-      for (let attempt = 0; attempt < 20 && !finalized; attempt++) {
-        await new Promise(resolve => setTimeout(resolve, 3000 + attempt * 1000));
-        setMessage(`Waiting for KMS proof... (attempt ${attempt + 1}/20)`);
+      let cleartext: bigint | undefined;
+      let decryptionProof: string | undefined;
+
+      for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt++) {
+        const delay = POLL_BASE_DELAY_MS + attempt * POLL_INCREMENT_MS;
+        await new Promise(resolve => setTimeout(resolve, delay));
+        setMessage(`Waiting for KMS proof... (attempt ${attempt + 1}/${MAX_POLL_ATTEMPTS})`);
 
         try {
-          // Try to get the cleartext from on-chain public decryption
-          // The KMS processes the makePubliclyDecryptable request and the
-          // cleartext becomes available. We attempt finalizeUnwrap which
-          // will revert if not yet available.
-          //
-          // Since we can't easily get the cleartext without the KMS callback,
-          // we check if the unwrap request is still pending
-          const requesterCheck = await contract
-            .getFunction("finalizeUnwrap")
-            .staticCall(
-              burntHandle,
-              0, // dummy cleartext — staticCall will revert with the real error
-              "0x",
-            )
-            .catch(() => null);
-
-          // If staticCall doesn't revert, something unexpected happened
-          if (requesterCheck !== null) {
-            finalized = true;
+          const result = await instance.publicDecrypt([burntHandle]);
+          if (result && result.clearValues && result.decryptionProof) {
+            const handleKey = burntHandle.toLowerCase();
+            const rawValue = result.clearValues[handleKey] ?? result.clearValues[burntHandle];
+            if (rawValue !== undefined && rawValue !== null) {
+              cleartext = BigInt(rawValue as bigint);
+              decryptionProof = result.decryptionProof as string;
+              break;
+            }
           }
         } catch {
-          // Expected — KMS hasn't provided proof yet, keep polling
+          // KMS hasn't processed the decryption yet, keep polling
         }
       }
 
-      if (!finalized) {
-        setStep("done");
-        setMessage(
-          "Unwrap requested. KMS finalization is taking longer than expected — " +
-            "your USDC will arrive once the KMS processes the proof.",
+      if (cleartext === undefined || !decryptionProof) {
+        throw new Error(
+          "KMS decryption timed out. The unwrap request is pending on-chain — " +
+            "you can retry finalization later once the KMS proof becomes available.",
         );
-        onComplete?.();
-        return;
       }
+
+      // Step 4: Call finalizeUnwrap with real cleartext and proof
+      setStep("finalizing");
+      setMessage("Finalizing unwrap on-chain...");
+
+      const finalizeTx = await contract.finalizeUnwrap(burntHandle, cleartext, decryptionProof);
+      await finalizeTx.wait();
 
       setStep("done");
       setMessage("Unwrap complete! USDC received.");
@@ -144,7 +139,7 @@ export function useUnwrap(params: {
       setStep("error");
       setMessage(`Unwrap failed: ${e instanceof Error ? e.message : String(e)}`);
     }
-  }, [canUnwrap, ethersSigner, cUsdcAddress, cUsdcAbi, walletAddress, amount, encryptWith, onComplete]);
+  }, [canUnwrap, instance, ethersSigner, cUsdcAddress, cUsdcAbi, walletAddress, amount, encryptWith, onComplete]);
 
   return { canUnwrap, unwrap, isProcessing, step, message };
 }
