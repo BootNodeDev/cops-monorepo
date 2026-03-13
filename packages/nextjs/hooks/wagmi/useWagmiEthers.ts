@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { ethers } from "ethers";
 import { useAccount, useWalletClient } from "wagmi";
 
-export const useWagmiEthers = (initialMockChains?: Readonly<Record<number, string>>) => {
+export const useWagmiEthers = () => {
   const { address, isConnected, chain } = useAccount();
   const { data: walletClient } = useWalletClient();
 
@@ -30,15 +30,8 @@ export const useWagmiEthers = (initialMockChains?: Readonly<Record<number, strin
   }, [walletClient]);
 
   const ethersReadonlyProvider = useMemo(() => {
-    if (!ethersProvider) return undefined;
-
-    const rpcUrl = initialMockChains?.[chainId || 0];
-    if (rpcUrl) {
-      return new ethers.JsonRpcProvider(rpcUrl);
-    }
-
     return ethersProvider;
-  }, [ethersProvider, initialMockChains, chainId]);
+  }, [ethersProvider]);
 
   const ethersSigner = useMemo(() => {
     if (!ethersProvider || !address) return undefined;

@@ -17,8 +17,6 @@ import { useEmployerStore } from "~~/services/store/employerStore";
 import { parseCsvFile, toCsvString, toPendingEmployees, validateRow } from "~~/utils/cops/csvParser";
 import { USDC_MULTIPLIER } from "~~/utils/cops/formatters";
 
-const INITIAL_MOCK_CHAINS = { 31337: "http://localhost:8545" };
-
 export default function EmployerPage() {
   const { isConnected, chain, address } = useAccount();
   const chainId = chain?.id;
@@ -31,11 +29,10 @@ export default function EmployerPage() {
   const { instance, status: fhevmStatus } = useFhevm({
     provider,
     chainId,
-    initialMockChains: INITIAL_MOCK_CHAINS,
     enabled: isConnected,
   });
 
-  const { chainId: ethChainId, ethersSigner, ethersReadonlyProvider } = useWagmiEthers(INITIAL_MOCK_CHAINS);
+  const { chainId: ethChainId, ethersSigner, ethersReadonlyProvider } = useWagmiEthers();
   const contracts = useContractAddresses(ethChainId);
 
   const {

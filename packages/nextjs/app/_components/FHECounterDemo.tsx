@@ -29,8 +29,6 @@ export const FHECounterDemo = () => {
     return (window as any).ethereum;
   }, []);
 
-  const initialMockChains = { 31337: "http://localhost:8545" };
-
   const {
     instance: fhevmInstance,
     status: fhevmStatus,
@@ -38,7 +36,6 @@ export const FHECounterDemo = () => {
   } = useFhevm({
     provider,
     chainId,
-    initialMockChains,
     enabled: true, // use enabled to dynamically create the instance on-demand
   });
 
@@ -51,7 +48,6 @@ export const FHECounterDemo = () => {
 
   const fheCounter = useFHECounterWagmi({
     instance: fhevmInstance,
-    initialMockChains,
   });
 
   //////////////////////////////////////////////////////////////////////////////

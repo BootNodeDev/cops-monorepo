@@ -1862,7 +1862,6 @@ const baseDeployedContracts = {
 
 const deployedContracts = {
   ...baseDeployedContracts,
-  31337: baseDeployedContracts[11155111],
 } as const;
 
 export default deployedContracts satisfies GenericContractsDeclaration;

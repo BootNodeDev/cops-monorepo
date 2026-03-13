@@ -29,13 +29,12 @@ import { useReadContract } from "wagmi";
  */
 export const useFHECounterWagmi = (parameters: {
   instance: FhevmInstance | undefined;
-  initialMockChains?: Readonly<Record<number, string>>;
 }) => {
-  const { instance, initialMockChains } = parameters;
+  const { instance } = parameters;
   const { storage: fhevmDecryptionSignatureStorage } = useInMemoryStorage();
 
   // Wagmi + ethers interop
-  const { chainId, accounts, isConnected, ethersReadonlyProvider, ethersSigner } = useWagmiEthers(initialMockChains);
+  const { chainId, accounts, isConnected, ethersReadonlyProvider, ethersSigner } = useWagmiEthers();
 
   // Resolve deployed contract info once we know the chain
   const allowedChainId = typeof chainId === "number" ? (chainId as AllowedChainIds) : undefined;
