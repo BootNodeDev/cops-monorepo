@@ -1,6 +1,5 @@
 import { expect } from "chai";
-import hre, { ethers } from "hardhat";
-import { FhevmType } from "@fhevm/mock-utils";
+import { ethers } from "hardhat";
 import type { MockUSDC, ConfidentialUSDC } from "../types";
 
 describe("ConfidentialUSDC", function () {

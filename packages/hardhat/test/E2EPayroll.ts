@@ -25,12 +25,15 @@ describe("E2E Payroll Flow", function () {
 
     // Deploy contracts
     usdc = (await (await ethers.getContractFactory("MockUSDC")).deploy()) as unknown as MockUSDC;
+    await usdc.waitForDeployment();
     cUSDC = (await (
       await ethers.getContractFactory("ConfidentialUSDC")
     ).deploy(await usdc.getAddress())) as unknown as ConfidentialUSDC;
+    await cUSDC.waitForDeployment();
     payroll = (await (
       await ethers.getContractFactory("ConfidentialPayroll")
     ).deploy(await cUSDC.getAddress(), await usdc.getAddress())) as unknown as ConfidentialPayroll;
+    await payroll.waitForDeployment();
 
     // Fund payroll: mint → approve → wrap to payroll
     await usdc.mint(employer.address, FUND_AMOUNT);
@@ -130,7 +133,7 @@ describe("E2E Payroll Flow", function () {
     expect(aliceBalance).to.not.equal(bobBalance);
   });
 
-  it("payroll contract cUSDC backing decreases after run", async function () {
+  it("payroll contract cUSDC backing remains unchanged after run", async function () {
     // inferredTotalSupply tracks USDC held by cUSDC wrapper — plaintext, no decrypt needed
     const cUSDCAddr = await cUSDC.getAddress();
     const usdcBefore = await usdc.balanceOf(cUSDCAddr);
