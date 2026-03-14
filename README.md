@@ -10,7 +10,7 @@ An external observer sees only transaction hashes and opaque ciphertext handles.
 
 ## Deployed Contracts
 
-| Contract | Address | Etherscan |
+| Contract | Address | Description |
 |---|---|---|
 | MockUSDC | [`0x7FEc53...76C9B`](https://sepolia.etherscan.io/address/0x7FEc53132c406d74995FA36579681C18F1b76C9B#code) | ERC-20 testnet USDC (open mint, 6 decimals) |
 | ConfidentialUSDC | [`0xFA64d7...91a2eb`](https://sepolia.etherscan.io/address/0xFA64d7a4815803f118847438F58A4B569a91a2eb#code) | ERC-7984 wrapper (USDC ↔ cUSDC) |
@@ -64,7 +64,7 @@ All FHE operations happen transparently via the Zama relayer SDK. Users only nee
 |---|---|
 | **Contracts** | Solidity 0.8.27, [`@fhevm/solidity ^0.11.1`](https://docs.zama.ai/protocol/solidity-guides), [`@openzeppelin/confidential-contracts 0.3.1`](https://www.npmjs.com/package/@openzeppelin/confidential-contracts), Hardhat |
 | **Frontend** | Next.js 15, React 19, TypeScript 5.8, Wagmi 2, Viem 2, RainbowKit |
-| **FHE** | [`@zama-fhe/relayer-sdk 0.4.2`](https://www.npmjs.com/package/@zama-fhe/relayer-sdk), `@fhevm-sdk` (workspace hooks) |
+| **FHE** | [`@zama-fhe/relayer-sdk 0.4.1`](https://www.npmjs.com/package/@zama-fhe/relayer-sdk), `@fhevm-sdk` (workspace hooks) |
 | **Styling** | TailwindCSS 4, DaisyUI 5 |
 | **State** | Zustand |
 | **Deploy** | Vercel (static), Sepolia testnet |
@@ -190,8 +190,7 @@ The deployer wallet owns `ConfidentialPayroll`. To transfer to another address:
 ```bash
 cd packages/hardhat
 npx hardhat transfer-ownership \
-  --contract <payroll_address> \
-  --new-owner <new_owner_address> \
+  --to <new_owner_address> \
   --network sepolia
 ```
 
