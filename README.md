@@ -406,4 +406,4 @@ Test files:
 
 ## License
 
-[BSD-3-Clause-Clear](LICENSE)
+[MIT](LICENSE)
