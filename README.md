@@ -95,6 +95,17 @@ Full technical spec: [docs/PRD.md](docs/PRD.md)
 | `pnpm lint:sol` | Lint Solidity with solhint |
 | `pnpm coverage` | Generate coverage report |
 
+## Roadmap
+
+| Phase | Focus | Status |
+|---|---|---|
+| v1.0 — Core | Encrypted payroll, ERC-7984, employer + employee flows | ✅ Shipped |
+| v1.1 — Hardening | Contract improvements, DX, UX polish | 🔜 Next |
+| v2.0 — Access Control | Multisig, gasless UX, employment attestations | 💬 Under Consideration |
+| v3.0 — Integrations | Cross-chain, salary streaming, DeFi hooks | 💬 Under Consideration |
+
+See [docs/future-roadmap.md](docs/future-roadmap.md) for full details on each phase.
+
 ## License
 
 BSD-3-Clause-Clear
