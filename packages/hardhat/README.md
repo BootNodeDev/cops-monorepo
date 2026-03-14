@@ -88,6 +88,17 @@ fhevm-hardhat-template/
 | `npm run lint`     | Run linting checks       |
 | `npm run clean`    | Clean build artifacts    |
 
+## Test Coverage
+
+| Contract | Statements | Branches | Functions | Lines |
+|----------|-----------|----------|-----------|-------|
+| **ConfidentialPayroll.sol** | 97.37% (37/38) | 84% (42/50) | 100% (10/10) | 98.11% (52/53) |
+| **ConfidentialUSDC.sol** | 100% (2/2) | 100% (0/0) | 100% (2/2) | 100% (2/2) |
+| **MockUSDC.sol** | 100% (2/2) | 100% (0/0) | 100% (3/3) | 100% (2/2) |
+| **All contracts** | **97.62% (41/42)** | **84% (42/50)** | **100% (15/15)** | **98.25% (56/57)** |
+
+> Generated with `pnpm coverage` via solidity-coverage v0.8.17
+
 ## 📚 Documentation
 
 - [FHEVM Documentation](https://docs.zama.ai/fhevm)
