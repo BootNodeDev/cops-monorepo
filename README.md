@@ -427,6 +427,17 @@ Test files:
 
 ---
 
+## Roadmap
+
+| Phase | Focus | Status |
+|---|---|---|
+| v1.0 — Core | Encrypted payroll, ERC-7984, employer + employee flows | ✅ Shipped |
+| v1.1 — Hardening | Contract improvements, DX, UX polish | 🔜 Next |
+| v2.0 — Access Control | Multisig, gasless UX, employment attestations | 💬 Under Consideration |
+| v3.0 — Integrations | Cross-chain, salary streaming, DeFi hooks | 💬 Under Consideration |
+
+See [docs/future-roadmap.md](docs/future-roadmap.md) for full details on each phase.
+
 ## License
 
 [MIT](LICENSE)
