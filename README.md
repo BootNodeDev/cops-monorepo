@@ -12,9 +12,9 @@ An external observer sees only transaction hashes and opaque ciphertext handles.
 
 | Contract | Address | Description |
 |---|---|---|
-| MockUSDC | [`0x7FEc53...76C9B`](https://sepolia.etherscan.io/address/0x7FEc53132c406d74995FA36579681C18F1b76C9B#code) | ERC-20 testnet USDC (open mint, 6 decimals) |
-| ConfidentialUSDC | [`0xFA64d7...91a2eb`](https://sepolia.etherscan.io/address/0xFA64d7a4815803f118847438F58A4B569a91a2eb#code) | ERC-7984 wrapper (USDC ↔ cUSDC) |
-| ConfidentialPayroll | [`0xfdc7e9...EA812`](https://sepolia.etherscan.io/address/0xfdc7e95d02f3E092E1CE1fAfeAc866BF757EA812#code) | Employee registry + payroll execution |
+| MockUSDC | [`0x6F140c...552EA`](https://sepolia.etherscan.io/address/0x6F140cD89f6Ed33A252cD5E55204106C14C552EA#code) | ERC-20 testnet USDC (open mint, 6 decimals) |
+| ConfidentialUSDC | [`0x7B0071...894A`](https://sepolia.etherscan.io/address/0x7B0071049961d62cB6C769D8Fa29990b2aA4894A#code) | ERC-7984 wrapper (USDC ↔ cUSDC) |
+| ConfidentialPayroll | [`0xfE745b...311f`](https://sepolia.etherscan.io/address/0xfE745b22a6586DA07561f24D0b4D8A3441C1311f#code) | Employee registry + payroll execution |
 
 Network: **Sepolia** (chainId `11155111`)
 
