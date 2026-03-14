@@ -32,7 +32,7 @@ describe("E2E Payroll Flow", function () {
     await cUSDC.waitForDeployment();
     payroll = (await (
       await ethers.getContractFactory("ConfidentialPayroll")
-    ).deploy(await cUSDC.getAddress(), await usdc.getAddress())) as unknown as ConfidentialPayroll;
+    ).deploy(await cUSDC.getAddress(), await usdc.getAddress(), employer.address)) as unknown as ConfidentialPayroll;
     await payroll.waitForDeployment();
 
     // Fund payroll: mint → approve → wrap to payroll

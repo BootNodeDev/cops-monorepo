@@ -14,6 +14,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployer } = await hre.getNamedAccounts();
   const { deploy, log } = hre.deployments;
 
+  // Owner override: set PAYROLL_OWNER env var to deploy with a different owner.
+  // Falls back to deployer if not set.
+  const payrollOwner = process.env.PAYROLL_OWNER || deployer;
+
   // 1. MockUSDC
   const mockUSDC = await deploy("MockUSDC", {
     from: deployer,
@@ -30,13 +34,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
   log(`ConfidentialUSDC deployed at ${confidentialUSDC.address}`);
 
-  // 3. ConfidentialPayroll(cUSDCAddress, mockUSDCAddress)
+  // 3. ConfidentialPayroll(cUSDCAddress, mockUSDCAddress, initialOwner)
   const confidentialPayroll = await deploy("ConfidentialPayroll", {
     from: deployer,
-    args: [confidentialUSDC.address, mockUSDC.address],
+    args: [confidentialUSDC.address, mockUSDC.address, payrollOwner],
     log: true,
   });
   log(`ConfidentialPayroll deployed at ${confidentialPayroll.address}`);
+  if (payrollOwner !== deployer) {
+    log(`  Owner: ${payrollOwner} (different from deployer)`);
+  }
 
   log("\n─── COPS Deployment Summary ───");
   log(`  MockUSDC:            ${mockUSDC.address}`);

@@ -85,8 +85,8 @@ contract ConfidentialPayroll is ZamaEthereumConfig, Ownable2Step, ReentrancyGuar
 
     // ─── Constructor ───────────────────────────────────────────────────────────
 
-    constructor(address cUSDCAddress, address usdcAddress) Ownable(msg.sender) {
-        if (cUSDCAddress == address(0) || usdcAddress == address(0)) revert ZeroAddress();
+    constructor(address cUSDCAddress, address usdcAddress, address initialOwner) Ownable(initialOwner) {
+        if (cUSDCAddress == address(0) || usdcAddress == address(0) || initialOwner == address(0)) revert ZeroAddress();
         cUSDC = IConfidentialUSDC(cUSDCAddress);
         USDC = IERC20(usdcAddress);
     }

@@ -35,6 +35,7 @@ describe("ConfidentialPayroll", function () {
     payroll = (await Payroll.deploy(
       await cUSDC.getAddress(),
       await usdc.getAddress(),
+      employer.address,
     )) as unknown as ConfidentialPayroll;
     await payroll.waitForDeployment();
 
@@ -58,7 +59,7 @@ describe("ConfidentialPayroll", function () {
 
     it("reverts if cUSDC address is zero", async function () {
       const Payroll = await ethers.getContractFactory("ConfidentialPayroll");
-      await expect(Payroll.deploy(ethers.ZeroAddress, await usdc.getAddress())).to.be.revertedWithCustomError(
+      await expect(Payroll.deploy(ethers.ZeroAddress, await usdc.getAddress(), employer.address)).to.be.revertedWithCustomError(
         payroll,
         "ZeroAddress",
       );
@@ -66,7 +67,7 @@ describe("ConfidentialPayroll", function () {
 
     it("reverts if USDC address is zero", async function () {
       const Payroll = await ethers.getContractFactory("ConfidentialPayroll");
-      await expect(Payroll.deploy(await cUSDC.getAddress(), ethers.ZeroAddress)).to.be.revertedWithCustomError(
+      await expect(Payroll.deploy(await cUSDC.getAddress(), ethers.ZeroAddress, employer.address)).to.be.revertedWithCustomError(
         payroll,
         "ZeroAddress",
       );
