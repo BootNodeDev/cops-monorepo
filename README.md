@@ -8,6 +8,29 @@ An external observer sees only transaction hashes and opaque ciphertext handles.
 
 ---
 
+## 🎥 Demo
+
+- **Live App:** https://cops-monorepo-nextjs.vercel.app/
+- **Video Demo:** https://vimeo.com/1173634365?share=copy&fl=sv&fe=ci
+
+## User Flows
+
+### Employer
+1. Connect employer wallet
+2. Import employees via CSV or add them manually
+3. Register employees — salaries are encrypted onchain at submission
+4. Reveal any employee salary (employer has full access via ACL)
+5. Fund payroll: Mint USDC → Approve → Shield into cUSDC
+6. Run payroll in one transaction — amounts stay encrypted end to end
+
+### Employee
+1. Connect employee wallet and navigate to the Employee Portal
+2. View own encrypted salary and click Reveal to decrypt it
+3. View own encrypted cUSDC balance and Reveal it
+4. Unshield cUSDC back to plain USDC — KMS generates decryption proof, funds are received
+
+---
+
 ## Deployed Contracts
 
 | Contract | Address | Description |
