@@ -6,8 +6,8 @@ import "~~/styles/globals.css";
 import { getMetadata } from "~~/utils/helper/getMetadata";
 
 export const metadata = getMetadata({
-  title: "Zama Template",
-  description: "Built with FHEVM",
+  title: "COPS — Confidential Onchain Payroll System",
+  description: "Pay employees in encrypted USDC. Salary amounts stay private on-chain using FHE.",
 });
 
 const DappWrapper = ({ children }: { children: React.ReactNode }) => {
