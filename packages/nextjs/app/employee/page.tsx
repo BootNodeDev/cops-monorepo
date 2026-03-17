@@ -224,9 +224,12 @@ export default function EmployeePage() {
                       <button
                         type="button"
                         className="btn btn-ghost btn-sm join-item border-base-300"
-                        onClick={() =>
-                          setUnwrapAmount((Number(effectiveBalanceClear) / Number(USDC_MULTIPLIER)).toString())
-                        }
+                        onClick={() => {
+                          const whole = effectiveBalanceClear / USDC_MULTIPLIER;
+                          const frac = effectiveBalanceClear % USDC_MULTIPLIER;
+                          const fracStr = frac > 0n ? `.${frac.toString().padStart(6, "0").replace(/0+$/, "")}` : "";
+                          setUnwrapAmount(`${whole}${fracStr}`);
+                        }}
                       >
                         Max
                       </button>

@@ -7,6 +7,24 @@ import { ethers } from "ethers";
 import type { Abi } from "viem";
 import { useReadContract } from "wagmi";
 
+const DECRYPT_TIMEOUT_MS = 120_000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`${label} timed out after ${ms / 1000}s`)), ms);
+    promise.then(
+      v => {
+        clearTimeout(timer);
+        resolve(v);
+      },
+      e => {
+        clearTimeout(timer);
+        reject(e);
+      },
+    );
+  });
+}
+
 export function useEmployeeBalance(params: {
   instance: FhevmInstance | undefined;
   ethersSigner: ethers.JsonRpcSigner | undefined;
@@ -40,30 +58,29 @@ export function useEmployeeBalance(params: {
     setMessage("Signing decryption request... (wallet popup)");
 
     try {
-      const sig = await FhevmDecryptionSignature.loadOrSign(
-        instance,
-        [cUsdcAddress],
-        ethersSigner,
-        storage,
-      );
+      const sig = await FhevmDecryptionSignature.loadOrSign(instance, [cUsdcAddress], ethersSigner, storage);
 
       if (!sig) {
         setMessage("Signature rejected");
         return;
       }
 
-      setMessage("Decrypting...");
+      setMessage("Decrypting (can take 30-60s)...");
 
       const requests = [{ handle: balanceHandle, contractAddress: cUsdcAddress }];
-      const results = await instance.userDecrypt(
-        requests,
-        sig.privateKey,
-        sig.publicKey,
-        sig.signature,
-        sig.contractAddresses,
-        sig.userAddress,
-        sig.startTimestamp,
-        sig.durationDays,
+      const results = await withTimeout(
+        instance.userDecrypt(
+          requests,
+          sig.privateKey,
+          sig.publicKey,
+          sig.signature,
+          sig.contractAddresses,
+          sig.userAddress,
+          sig.startTimestamp,
+          sig.durationDays,
+        ),
+        DECRYPT_TIMEOUT_MS,
+        "userDecrypt",
       );
 
       const value = results[balanceHandle as `0x${string}`];
@@ -80,7 +97,15 @@ export function useEmployeeBalance(params: {
         msg.includes("rejected") ||
         msg.includes("denied") ||
         msg.includes("user rejected");
-      setMessage(rejected ? "Signature rejected" : `Decryption failed: ${msg}`);
+      if (rejected) {
+        setMessage("Signature rejected");
+      } else if (msg.includes("not authorized")) {
+        setMessage("ACL: wallet not authorized to decrypt this handle");
+      } else if (msg.includes("timed out")) {
+        setMessage("Relayer timeout — try again in a few minutes");
+      } else {
+        setMessage(`Decryption failed: ${msg}`);
+      }
     } finally {
       setIsDecrypting(false);
     }
@@ -96,6 +121,8 @@ export function useEmployeeBalance(params: {
     balanceClear,
     message,
     refetch: useCallback(() => {
+      setBalanceClear(undefined);
+      setMessage("");
       balanceResult.refetch();
     }, [balanceResult]),
   };
