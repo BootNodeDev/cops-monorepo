@@ -4,34 +4,49 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { RainbowKitCustomConnectButton } from "~~/components/helper";
+import { CopsLogo } from "~~/components/ui/CopsLogo";
+import { ThemeToggle } from "~~/components/ui/ThemeToggle";
 
 export const Header = () => {
   const pathname = usePathname();
 
-  const navLinks = [
+  const roles = [
     { href: "/employer", label: "Employer" },
     { href: "/employee", label: "Employee" },
   ];
 
   return (
-    <div className="sticky lg:static top-0 navbar min-h-0 shrink-0 justify-between z-20 px-0 sm:px-2">
-      <div className="navbar-start">
-        <Link href="/" className="btn btn-ghost text-lg font-bold">
-          COPS
+    <nav className="sticky top-0 z-20 w-full border-b border-base-300/50 bg-base-200/60 backdrop-blur-xl">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
+        <Link href="/" className="transition-opacity hover:opacity-80">
+          <CopsLogo className="h-7" />
         </Link>
-        <ul className="menu menu-horizontal px-1 gap-1">
-          {navLinks.map(link => (
-            <li key={link.href}>
-              <Link href={link.href} className={pathname === link.href ? "active" : ""}>
-                {link.label}
+
+        <div className="flex items-center rounded-lg bg-base-300/60 p-1">
+          {roles.map(role => {
+            const isActive = pathname === role.href;
+            return (
+              <Link
+                key={role.href}
+                href={role.href}
+                className={`rounded-md px-4 py-1.5 text-sm font-medium transition-all
+                  ${
+                    isActive
+                      ? "bg-primary text-primary-content shadow-sm"
+                      : "text-base-content/60 hover:text-base-content"
+                  }`}
+              >
+                {role.label}
               </Link>
-            </li>
-          ))}
-        </ul>
+            );
+          })}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <RainbowKitCustomConnectButton />
+        </div>
       </div>
-      <div className="navbar-end grow mr-4">
-        <RainbowKitCustomConnectButton />
-      </div>
-    </div>
+    </nav>
   );
 };

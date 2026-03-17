@@ -26,33 +26,22 @@ export const Balance = ({ address, className = "" }: BalanceProps) => {
 
   if (!address || isLoading || balance === null) {
     return (
-      <div className="animate-pulse flex space-x-4">
-        <div className="rounded-md bg-slate-300 h-6 w-6"></div>
-        <div className="flex items-center space-y-6">
-          <div className="h-2 w-28 bg-slate-300 rounded-sm"></div>
-        </div>
+      <div className="flex animate-pulse items-center gap-2">
+        <div className="h-2 w-20 rounded bg-base-300" />
       </div>
     );
   }
 
   if (isError) {
-    return (
-      <div className="border-2 border-base-content/30 rounded-md px-2 flex flex-col items-center max-w-fit cursor-pointer">
-        <div className="text-warning">Error</div>
-      </div>
-    );
+    return <span className="text-xs text-warning">Error</span>;
   }
 
   const formattedBalance = balance ? Number(formatEther(balance.value)) : 0;
 
   return (
-    <div className={`btn btn-sm btn-ghost flex flex-col font-normal items-center hover:bg-transparent ${className}`}>
-      <div className="w-full flex items-center justify-center">
-        <>
-          <span>{formattedBalance.toFixed(4)}</span>
-          <span className="text-[0.8em] font-bold ml-1">{targetNetwork.nativeCurrency.symbol}</span>
-        </>
-      </div>
-    </div>
+    <span className={`font-mono text-sm tabular-nums text-base-content/70 ${className}`}>
+      {formattedBalance.toFixed(4)}
+      <span className="ml-1 text-[0.8em] text-base-content/40">{targetNetwork.nativeCurrency.symbol}</span>
+    </span>
   );
 };
