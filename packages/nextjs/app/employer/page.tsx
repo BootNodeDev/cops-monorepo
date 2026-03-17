@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useFhevm } from "@fhevm-sdk";
-import { useAccount } from "wagmi";
+import { useAccount, useReadContract } from "wagmi";
 import { CryptoAmount, EncryptedAmount, Spinner, StatusText } from "~~/components/ui";
 import {
   useBatchRegister,
@@ -34,6 +34,15 @@ export default function EmployerPage() {
 
   const { chainId: ethChainId, ethersSigner, ethersReadonlyProvider } = useWagmiEthers();
   const contracts = useContractAddresses(ethChainId);
+
+  const ownerResult = useReadContract({
+    address: contracts.payrollAddress,
+    abi: contracts.payrollAbi as any,
+    functionName: "owner",
+    query: { enabled: Boolean(contracts.payrollAddress) },
+  });
+  const contractOwner = ownerResult.data as `0x${string}` | undefined;
+  const isOwner = Boolean(address && contractOwner && address.toLowerCase() === contractOwner.toLowerCase());
 
   const {
     employees,
@@ -120,55 +129,110 @@ export default function EmployerPage() {
   }, [runPayroll, refetchEmployees]);
 
   // ─── Salary Reveal ───────────────────────────────────────────────────
-  const [revealId, setRevealId] = useState<number | undefined>();
   const salary = useEmployeeSalary({
     instance,
     ethersSigner,
-    chainId: ethChainId,
     payrollAddress: contracts.payrollAddress,
     payrollAbi: contracts.payrollAbi,
-    employeeId: revealId,
   });
   const [revealedSalaries, setRevealedSalaries] = useState<Record<number, bigint>>({});
+  const [deniedIds, setDeniedIds] = useState<Set<number>>(new Set());
+  const [revealId, setRevealId] = useState<number | undefined>();
 
   const handleReveal = useCallback(
-    (id: number) => {
+    async (id: number) => {
+      if (revealedSalaries[id] !== undefined || deniedIds.has(id)) return;
       setRevealId(id);
-      salary.decrypt();
+      const result = await salary.decrypt(id);
+      if (typeof result === "bigint") {
+        setRevealedSalaries(prev => ({ ...prev, [id]: result }));
+      } else if (result === "denied") {
+        setDeniedIds(prev => new Set(prev).add(id));
+      }
     },
-    [salary],
+    [revealedSalaries, deniedIds, salary],
   );
-
-  // Cache revealed salary
-  if (revealId && salary.salaryClear !== undefined && !(revealId in revealedSalaries)) {
-    setRevealedSalaries(prev => ({ ...prev, [revealId]: salary.salaryClear! }));
-  }
 
   if (!isConnected) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <h2 className="text-2xl font-bold">Employer Dashboard</h2>
-        <p className="text-base-content/60">Connect your wallet to continue.</p>
+        <p className="text-base-content/50">Connect your wallet to continue.</p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-6 p-4 max-w-6xl mx-auto">
-      <h1 className="text-2xl font-bold">Employer Dashboard</h1>
+    <div className="mx-auto flex max-w-7xl flex-col gap-6 p-4">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Employer Dashboard</h1>
+        <span className="font-mono text-xs text-base-content/40">
+          {address?.slice(0, 6)}...{address?.slice(-4)}
+        </span>
+      </div>
+
+      {contractOwner && !isOwner && (
+        <div role="alert" className="alert alert-warning">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5 shrink-0"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            aria-hidden="true"
+          >
+            <title>Warning</title>
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
+          </svg>
+          <div>
+            <p className="font-semibold">Read-only mode</p>
+            <p className="text-xs">
+              Only the contract owner can manage employees, fund payroll, and run payroll. Connect with the owner wallet
+              to enable these actions.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {salary.message && (
+        <StatusText
+          message={salary.message}
+          variant={
+            salary.message.includes("fail") ||
+            salary.message.includes("timeout") ||
+            salary.message.includes("ACL") ||
+            salary.message.includes("error")
+              ? "error"
+              : "default"
+          }
+        />
+      )}
+
       {fhevmStatus === "loading" && <StatusText message="Initializing FHE..." variant="warning" />}
       {fhevmStatus === "error" && <StatusText message="FHE initialization failed" variant="error" />}
 
-      {/* ─── Registered Employees ───────────────────────────────────── */}
-      <div className="card bg-base-200 shadow">
+      <div className="card border border-base-300/50 bg-base-200">
         <div className="card-body">
           <div className="flex items-center justify-between">
-            <h2 className="card-title">Registered Employees ({employees.length})</h2>
+            <h2 className="card-title text-base">
+              Registered Employees
+              <span className="badge badge-sm badge-neutral">{employees.length}</span>
+            </h2>
             <div className="flex gap-2">
-              <button className="btn btn-sm btn-ghost" onClick={handleCsvExport} disabled={employees.length === 0}>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={handleCsvExport}
+                disabled={employees.length === 0}
+              >
                 Export CSV
               </button>
-              <button className="btn btn-sm btn-ghost" onClick={() => refetchEmployees()}>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => refetchEmployees()}>
                 {loadingEmployees ? <Spinner size="xs" /> : "Refresh"}
               </button>
             </div>
@@ -176,7 +240,7 @@ export default function EmployerPage() {
           <div className="overflow-x-auto">
             <table className="table table-sm">
               <thead>
-                <tr>
+                <tr className="text-base-content/50">
                   <th>ID</th>
                   <th>Address</th>
                   <th>Name</th>
@@ -188,13 +252,13 @@ export default function EmployerPage() {
               </thead>
               <tbody>
                 {employees.map(emp => (
-                  <tr key={emp.id} className={emp.active ? "" : "opacity-50"}>
-                    <td>{emp.id}</td>
+                  <tr key={emp.id} className={emp.active ? "" : "opacity-40"}>
+                    <td className="font-mono text-xs text-base-content/50">{emp.id}</td>
                     <td className="font-mono text-xs">
                       {emp.wallet.slice(0, 8)}...{emp.wallet.slice(-4)}
                     </td>
                     <td>{emp.name}</td>
-                    <td>{emp.role}</td>
+                    <td className="text-base-content/70">{emp.role}</td>
                     <td>
                       <span className={`badge badge-sm ${emp.active ? "badge-success" : "badge-ghost"}`}>
                         {emp.active ? "Active" : "Inactive"}
@@ -203,18 +267,19 @@ export default function EmployerPage() {
                     <td>
                       <EncryptedAmount
                         clearValue={revealedSalaries[emp.id]}
-                        onReveal={() => handleReveal(emp.id)}
+                        onReveal={isOwner && !deniedIds.has(emp.id) ? () => handleReveal(emp.id) : undefined}
                         isRevealing={revealId === emp.id && salary.isDecrypting}
+                        denied={deniedIds.has(emp.id)}
                       />
                     </td>
-                    <td className="text-xs">
+                    <td className="text-xs text-base-content/50">
                       {emp.lastPaidAt === 0n ? "Never" : new Date(Number(emp.lastPaidAt) * 1000).toLocaleDateString()}
                     </td>
                   </tr>
                 ))}
                 {employees.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="text-center text-base-content/50">
+                    <td colSpan={7} className="text-center text-base-content/40 py-8">
                       No employees registered yet
                     </td>
                   </tr>
@@ -225,15 +290,14 @@ export default function EmployerPage() {
         </div>
       </div>
 
-      {/* ─── Add Employees (CRUD + CSV) ─────────────────────────────── */}
-      <div className="card bg-base-200 shadow">
+      <div className="card border border-base-300/50 bg-base-200">
         <div className="card-body">
-          <h2 className="card-title">Add Employees</h2>
-          <div className="flex gap-2 mb-2">
-            <button className="btn btn-sm btn-primary" onClick={addRow}>
+          <h2 className="card-title text-base">Add Employees</h2>
+          <div className="flex gap-2">
+            <button type="button" className="btn btn-primary btn-sm" onClick={addRow} disabled={!isOwner}>
               + Add Row
             </button>
-            <button className="btn btn-sm btn-ghost" onClick={() => csvInputRef.current?.click()}>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => csvInputRef.current?.click()}>
               Import CSV
             </button>
             <input ref={csvInputRef} type="file" accept=".csv" className="hidden" onChange={handleCsvImport} />
@@ -243,12 +307,12 @@ export default function EmployerPage() {
             <div className="overflow-x-auto">
               <table className="table table-sm">
                 <thead>
-                  <tr>
+                  <tr className="text-base-content/50">
                     <th>Address</th>
                     <th>Name</th>
                     <th>Role</th>
-                    <th>Monthly USDC</th>
-                    <th></th>
+                    <th>USDC</th>
+                    <th aria-label="Actions" />
                   </tr>
                 </thead>
                 <tbody>
@@ -280,7 +344,7 @@ export default function EmployerPage() {
                       </td>
                       <td>
                         <input
-                          className="input input-xs input-bordered w-24"
+                          className="input input-xs input-bordered w-20"
                           type="number"
                           placeholder="6500"
                           value={row.monthlySalaryUsdc}
@@ -288,7 +352,11 @@ export default function EmployerPage() {
                         />
                       </td>
                       <td>
-                        <button className="btn btn-xs btn-ghost btn-circle" onClick={() => removeRow(row.id)}>
+                        <button
+                          type="button"
+                          className="btn btn-ghost btn-circle btn-xs"
+                          onClick={() => removeRow(row.id)}
+                        >
                           x
                         </button>
                       </td>
@@ -300,8 +368,13 @@ export default function EmployerPage() {
           )}
 
           {pendingRows.length > 0 && (
-            <div className="flex items-center gap-4 mt-2">
-              <button className="btn btn-primary btn-sm" disabled={!batchRegister.canRegister} onClick={handleRegister}>
+            <div className="mt-2 space-y-2">
+              <button
+                type="button"
+                className="btn btn-primary btn-sm w-full"
+                disabled={!batchRegister.canRegister || !isOwner}
+                onClick={handleRegister}
+              >
                 {batchRegister.isProcessing ? (
                   <Spinner size="xs" />
                 ) : (
@@ -319,53 +392,68 @@ export default function EmployerPage() {
         </div>
       </div>
 
-      {/* ─── Fund Payroll ───────────────────────────────────────────── */}
-      <div className="card bg-base-200 shadow">
-        <div className="card-body">
-          <h2 className="card-title">Fund Payroll</h2>
-          <div className="flex flex-wrap items-end gap-4">
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="card border border-base-300/50 bg-base-200">
+          <div className="card-body">
+            <h2 className="card-title text-base">Fund Payroll</h2>
             <div className="form-control">
-              <label className="label">
-                <span className="label-text">Amount (USDC)</span>
+              <label className="label" htmlFor="fund-amount">
+                <span className="label-text text-xs text-base-content/50">Amount (USDC)</span>
               </label>
               <input
-                className="input input-bordered w-40"
+                id="fund-amount"
+                className="input input-bordered w-full"
                 type="number"
                 placeholder="50000"
                 value={fundAmount}
                 onChange={e => setFundAmount(e.target.value)}
               />
             </div>
-            <div className="flex gap-2">
-              <button className="btn btn-sm" disabled={!fund.canMint} onClick={fund.mint}>
+            <div className="flex flex-col gap-2">
+              <button type="button" className="btn btn-sm" disabled={!fund.canMint || !isOwner} onClick={fund.mint}>
                 {fund.step === "minting" ? <Spinner size="xs" /> : "1. Mint USDC"}
               </button>
-              <button className="btn btn-sm" disabled={!fund.canApprove} onClick={fund.approve}>
+              <button
+                type="button"
+                className="btn btn-sm"
+                disabled={!fund.canApprove || !isOwner}
+                onClick={fund.approve}
+              >
                 {fund.step === "approving" ? <Spinner size="xs" /> : "2. Approve"}
               </button>
-              <button className="btn btn-sm btn-primary" disabled={!fund.canWrap} onClick={fund.wrap}>
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                disabled={!fund.canWrap || !isOwner}
+                onClick={fund.wrap}
+              >
                 {fund.step === "wrapping" ? <Spinner size="xs" /> : "3. Wrap to cUSDC"}
               </button>
             </div>
+            {fund.currentAllowance > 0n && (
+              <p className="mt-1 text-xs text-base-content/40">
+                Allowance: <CryptoAmount amount={fund.currentAllowance} />
+              </p>
+            )}
+            <StatusText
+              message={fund.message}
+              variant={fund.step === "error" ? "error" : fund.step === "done" ? "success" : "default"}
+            />
           </div>
-          {fund.currentAllowance > 0n && (
-            <p className="text-xs text-base-content/50 mt-1">
-              Current allowance: <CryptoAmount amount={fund.currentAllowance} />
-            </p>
-          )}
-          <StatusText
-            message={fund.message}
-            variant={fund.step === "error" ? "error" : fund.step === "done" ? "success" : "default"}
-          />
         </div>
-      </div>
 
-      {/* ─── Run Payroll ────────────────────────────────────────────── */}
-      <div className="card bg-base-200 shadow">
-        <div className="card-body">
-          <h2 className="card-title">Run Payroll</h2>
-          <div className="flex items-center gap-4">
-            <button className="btn btn-primary" disabled={!runPayroll.canRun} onClick={handleRunPayroll}>
+        <div className="card border border-base-300/50 bg-base-200">
+          <div className="card-body">
+            <h2 className="card-title text-base">Run Payroll</h2>
+            <p className="text-xs text-base-content/40">
+              Transfers each active employee&apos;s encrypted salary from the contract balance.
+            </p>
+            <button
+              type="button"
+              className="btn btn-primary w-full"
+              disabled={!runPayroll.canRun || !isOwner}
+              onClick={handleRunPayroll}
+            >
               {runPayroll.isProcessing ? <Spinner size="sm" /> : "Run Payroll"}
             </button>
             <StatusText
